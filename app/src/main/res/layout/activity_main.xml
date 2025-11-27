@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dice for Fate"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <GridLayout
+        android:id="@+id/diceGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="4"
+        android:rowCount="4"
+        android:alignmentMode="alignMargins"
+        android:useDefaultMargins="true">
+
+        <Button android:id="@+id/btn1d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d2" />
+        <Button android:id="@+id/btn1d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d3" />
+        <Button android:id="@+id/btn1d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d4" />
+        <Button android:id="@+id/btn1d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d6" />
+        <Button android:id="@+id/btn1d10" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d10" />
+        <Button android:id="@+id/btn1d20" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d20" />
+        <Button android:id="@+id/btn1d100" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d100" />
+        <Button android:id="@+id/btn2d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d2" />
+        <Button android:id="@+id/btn2d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d3" />
+        <Button android:id="@+id/btn2d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d4" />
+        <Button android:id="@+id/btn2d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d6" />
+        <Button android:id="@+id/btnMdn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="@string/mdn" />
+
+    </GridLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="12dp">
+
+        <TextView
+            android:id="@+id/tvResultLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:lineSpacingExtra="6dp" />
+
+        <TextView
+            android:id="@+id/tvSumLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:lineSpacingExtra="4dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/history" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:id="@+id/tvResultSizeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/result_size" />
+
+        <SeekBar
+            android:id="@+id/sbResultSize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="22" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="4dp">
+
+        <TextView
+            android:id="@+id/tvSumSizeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/sum_size" />
+
+        <SeekBar
+            android:id="@+id/sbSumSize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="22" />
+
+    </LinearLayout>
+
+    </LinearLayout>

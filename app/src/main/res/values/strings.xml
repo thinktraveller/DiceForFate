@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dice for Fate</string>
+    <string name="clear_history">清空历史</string>
+    <string name="copy_result">复制结果</string>
+    <string name="no_results">暂无掷骰记录</string>
+    <string name="history">历史记录</string>
+    <string name="mdn">mdn</string>
+    <string name="input_m">骰子数 m</string>
+    <string name="input_n">骰子面数 n</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="invalid_input">输入数字不合法</string>
+    <string name="hint_m_range">骰子数 m (2≤m≤10)</string>
+    <string name="hint_n_range">骰子面数 n (2≤n≤100)</string>
+    <string name="font_size_label">字号: %1$dsp</string>
+    <string name="result_size">结果字号</string>
+    <string name="sum_size">总和字号</string>
+</resources>
