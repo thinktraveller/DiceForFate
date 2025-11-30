@@ -14,6 +14,27 @@
         android:textStyle="bold"
         android:paddingBottom="8dp" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="抽签模式"
+            android:textSize="16sp"
+            android:paddingRight="12dp" />
+
+        <Switch
+            android:id="@+id/switchLottery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
     <GridLayout
         android:id="@+id/diceGrid"
         android:layout_width="match_parent"

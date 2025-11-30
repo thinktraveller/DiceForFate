@@ -16,6 +16,7 @@ class ResultAdapter(private var items: List<RollResult>, private val onLongClick
         val tvDice: TextView = itemView.findViewById(R.id.tvDice)
         val tvRolls: TextView = itemView.findViewById(R.id.tvRolls)
         val tvSum: TextView = itemView.findViewById(R.id.tvSum)
+        val tvEvent: TextView = itemView.findViewById(R.id.tvEvent)
         val tvTime: TextView = itemView.findViewById(R.id.tvTime)
     }
 
@@ -31,6 +32,7 @@ class ResultAdapter(private var items: List<RollResult>, private val onLongClick
         holder.tvDice.text = "${item.dice.count}d${item.dice.sides}"
         holder.tvRolls.text = "结果: ${item.rolls.joinToString(", ")}"
         holder.tvSum.text = "总和: ${item.sum}"
+        holder.tvEvent.text = item.event?.let { "事件: $it" } ?: ""
         val df = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         holder.tvTime.text = df.format(Date(item.timestamp))
         holder.itemView.setOnLongClickListener {

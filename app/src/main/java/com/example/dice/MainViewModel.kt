@@ -16,4 +16,8 @@ class MainViewModel : ViewModel() {
         HistoryStore.add(result)
         _current.value = result
     }
+
+    fun setCurrent(result: RollResult) {
+        _current.value = result
+    }
 }

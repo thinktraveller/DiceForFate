@@ -24,22 +24,85 @@ class MainActivity : ComponentActivity() {
 
         vm.current.observe(this) { r ->
             if (r != null) {
-                val m = r.dice.count
-                if (m == 1) {
-                    binding.tvResultLine.text = r.rolls.first().toString()
-                    binding.tvSumLine.visibility = android.view.View.GONE
-                } else {
-                    binding.tvResultLine.text = "结果: ${r.rolls.joinToString(", ")}"
-                    binding.tvSumLine.text = "总和: ${r.sum}"
+                if (r.event != null) {
+                    binding.tvResultLine.text = "点数: ${r.rolls.first()}"
+                    binding.tvSumLine.text = r.event
                     binding.tvSumLine.visibility = android.view.View.VISIBLE
+                } else {
+                    val m = r.dice.count
+                    if (m == 1) {
+                        binding.tvResultLine.text = r.rolls.first().toString()
+                        binding.tvSumLine.visibility = android.view.View.GONE
+                    } else {
+                        binding.tvResultLine.text = "结果: ${r.rolls.joinToString(", ")}"
+                        binding.tvSumLine.text = "总和: ${r.sum}"
+                        binding.tvSumLine.visibility = android.view.View.VISIBLE
+                    }
                 }
             }
         }
 
-        binding.btn1d2.setOnClickListener { vibrate(); vm.roll(1, 2) }
-        binding.btn1d3.setOnClickListener { vibrate(); vm.roll(1, 3) }
-        binding.btn1d4.setOnClickListener { vibrate(); vm.roll(1, 4) }
-        binding.btn1d6.setOnClickListener { vibrate(); vm.roll(1, 6) }
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val lotteryEnabled = prefs.getBoolean("lottery_mode_enabled", true)
+        binding.switchLottery.isChecked = lotteryEnabled
+        binding.switchLottery.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
+        }
+
+        fun handleLottery(sides: Int) {
+            if (!binding.switchLottery.isChecked) { vm.roll(1, sides); return }
+            val container = android.widget.LinearLayout(this)
+            container.orientation = android.widget.LinearLayout.VERTICAL
+            container.setPadding(40, 20, 40, 0)
+            val inputs = ArrayList<com.google.android.material.textfield.TextInputEditText>()
+            repeat(sides) { idx ->
+                val layout = com.google.android.material.textfield.TextInputLayout(this)
+                layout.hint = "点数 ${idx + 1} 对应事件"
+                val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
+                edit.inputType = android.text.InputType.TYPE_CLASS_TEXT
+                layout.addView(edit)
+                container.addView(layout)
+                inputs.add(edit)
+            }
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("填写事件")
+                .setView(container)
+                .setPositiveButton("开始抽签", null)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .create()
+            dialog.setOnShowListener {
+                val ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                fun validate(): Boolean {
+                    return inputs.all { !it.text.isNullOrBlank() }
+                }
+                val watcher = object : android.text.TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                    override fun afterTextChanged(s: android.text.Editable?) { ok.isEnabled = validate() }
+                }
+                inputs.forEach { it.addTextChangedListener(watcher) }
+                ok.isEnabled = validate()
+                ok.setOnClickListener {
+                    if (validate()) {
+                        vibrate()
+                        val labels = inputs.map { it.text.toString() }
+                        val result = DiceRoller().roll(com.example.dice.model.Dice(1, sides))
+                        val rolled = result.rolls.first()
+                        val eventText = labels[rolled - 1]
+                        val withEvent = result.copy(event = eventText)
+                        HistoryStore.add(withEvent)
+                        vm.setCurrent(withEvent)
+                        dialog.dismiss()
+                    }
+                }
+            }
+            dialog.show()
+        }
+
+        binding.btn1d2.setOnClickListener { vibrate(); handleLottery(2) }
+        binding.btn1d3.setOnClickListener { vibrate(); handleLottery(3) }
+        binding.btn1d4.setOnClickListener { vibrate(); handleLottery(4) }
+        binding.btn1d6.setOnClickListener { vibrate(); handleLottery(6) }
         binding.btn1d10.setOnClickListener { vibrate(); vm.roll(1, 10) }
         binding.btn1d20.setOnClickListener { vibrate(); vm.roll(1, 20) }
         binding.btn1d100.setOnClickListener { vibrate(); vm.roll(1, 100) }
@@ -50,7 +113,6 @@ class MainActivity : ComponentActivity() {
         binding.btnMdn.setOnClickListener { showMdnDialog() }
         binding.btnHistory.setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
 
-        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
         val base = 18
         val resultSize = prefs.getInt("result_text_size_sp", 30)
         val sumSize = prefs.getInt("sum_text_size_sp", 24)
