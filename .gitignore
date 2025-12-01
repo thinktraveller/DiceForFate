@@ -1,0 +1,10 @@
+.gradle/
+app/build/
+android-sdk/
+tools/
+dist/*.apk
+dist/checksums.txt
+archive/*.zip
+.idea/
+*.iml
+*.zip

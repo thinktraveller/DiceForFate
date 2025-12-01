@@ -16,4 +16,5 @@
     <string name="font_size_label">字号: %1$dsp</string>
     <string name="result_size">结果字号</string>
     <string name="sum_size">总和字号</string>
+    <string name="lottery_mode_label">随机事件模式</string>
 </resources>
