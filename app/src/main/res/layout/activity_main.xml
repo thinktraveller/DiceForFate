@@ -42,6 +42,10 @@
         android:paddingBottom="8dp"
         android:text="@string/exclusion_mode_label" />
 
+    <Switch android:id="@+id/switchNoRepeat" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="不重复抽取" />
+    <TextView android:id="@+id/tvRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:accessibilityLiveRegion="polite" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="关闭开关暂停本轮；重启保留进度。抽完后下次成功投掷开启新一轮。成功投掷另一骰型结束旧轮。" />
+    <Button android:id="@+id/btnClearRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="清除已掷记录（保留历史）" />
     <GridLayout
         android:id="@+id/diceGrid"
         android:layout_width="match_parent"

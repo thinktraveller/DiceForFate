@@ -51,6 +51,27 @@ class MainActivity : ComponentActivity() {
             prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
         }
 
+        val savedRound = runCatching {
+            val count = prefs.getInt("round_count", 0)
+            if (count == 0) null else DrawRound(
+                com.example.dice.model.Dice(count, prefs.getInt("round_sides", 0)),
+                prefs.getString("round_drawn", "")!!.split(',').filter { it.isNotBlank() }.map { it.toInt() }.toSet()
+            )
+        }.getOrNull()
+        vm.restoreRound(savedRound)
+        binding.switchNoRepeat.isChecked = prefs.getBoolean("no_repeat", false)
+        binding.switchNoRepeat.setOnCheckedChangeListener { _, checked ->
+            prefs.edit().putBoolean("no_repeat", checked).apply()
+            renderRound()
+        }
+        binding.btnClearRound.setOnClickListener { vm.clearRound() }
+        vm.round.observe(this) { round ->
+            prefs.edit().putInt("round_count", round?.dice?.count ?: 0)
+                .putInt("round_sides", round?.dice?.sides ?: 0)
+                .putString("round_drawn", round?.drawn?.sorted()?.joinToString(",") ?: "").apply()
+            renderRound()
+        }
+
         binding.btn1d2.setOnClickListener { vibrate(); startRoll(1, 2, true) }
         binding.btn1d3.setOnClickListener { vibrate(); startRoll(1, 3, true) }
         binding.btn1d4.setOnClickListener { vibrate(); startRoll(1, 4, true) }
@@ -99,6 +120,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startRoll(count: Int, sides: Int, eventCapable: Boolean = false) {
+        if (!guard { vm.available(count, sides, emptySet(), binding.switchNoRepeat.isChecked) }) return
         if (!binding.switchExclusion.isChecked) {
             finishRoll(count, sides, eventCapable, emptySet())
             return
@@ -124,8 +146,10 @@ class MainActivity : ComponentActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val excludedFaces = selected.toSet()
-                dialog.dismiss()
-                finishRoll(count, sides, eventCapable, excludedFaces)
+                if (guard { vm.available(count, sides, excludedFaces, binding.switchNoRepeat.isChecked) }) {
+                    dialog.dismiss()
+                    finishRoll(count, sides, eventCapable, excludedFaces)
+                }
             }
         }
         dialog.show()
@@ -135,7 +159,7 @@ class MainActivity : ComponentActivity() {
         if (eventCapable && binding.switchLottery.isChecked) {
             showEventDialog(count, sides, excludedFaces)
         } else {
-            vm.roll(count, sides, excludedFaces)
+            commitRoll(count, sides, excludedFaces)
         }
     }
 
@@ -145,7 +169,7 @@ class MainActivity : ComponentActivity() {
             setPadding(40, 20, 40, 0)
         }
         val inputs = linkedMapOf<Int, com.google.android.material.textfield.TextInputEditText>()
-        (1..sides).filterNot { it in excludedFaces }.forEach { face ->
+        vm.available(count, sides, excludedFaces, binding.switchNoRepeat.isChecked).forEach { face ->
             val layout = com.google.android.material.textfield.TextInputLayout(this)
             layout.hint = getString(R.string.event_for_face, face)
             val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
@@ -173,12 +197,38 @@ class MainActivity : ComponentActivity() {
             ok.setOnClickListener {
                 if (valid()) {
                     val events = inputs.mapValues { it.value.text.toString() }
-                    vm.roll(count, sides, excludedFaces, events)
+                    commitRoll(count, sides, excludedFaces, events)
                     dialog.dismiss()
                 }
             }
         }
         dialog.show()
+    }
+
+    private fun renderRound() {
+        val round = vm.round.value
+        binding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
+        binding.tvRound.text = if (round == null) "本轮尚无已掷记录" else {
+            val state = if (round.complete) "本轮已抽完；下次开启新一轮" else if (!binding.switchNoRepeat.isChecked) "已暂停" else "进行中"
+            "${round.dice.count}d${round.dice.sides} · $state\n已掷：${round.drawn.sorted().joinToString(", ")}\n剩余 ${round.remaining} 个面值"
+        }
+    }
+
+    private fun guard(action: () -> Unit): Boolean = try {
+        action(); true
+    } catch (error: IllegalArgumentException) {
+        android.widget.Toast.makeText(this, error.message, android.widget.Toast.LENGTH_LONG).show()
+        false
+    }
+
+    private fun commitRoll(count: Int, sides: Int, excluded: Set<Int>, events: Map<Int, String> = emptyMap()) {
+        val previous = vm.round.value
+        val enabled = binding.switchNoRepeat.isChecked
+        if (guard { vm.roll(count, sides, excluded, events, enabled) }) {
+            if (enabled && (previous == null || previous.complete || previous.dice != com.example.dice.model.Dice(count, sides))) {
+                android.widget.Toast.makeText(this, "已开始新一轮", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun copyToClipboard(result: RollResult) {
@@ -188,8 +238,12 @@ class MainActivity : ComponentActivity() {
 
     private fun vibrate() {
         val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        val effect = VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE)
-        vb.vibrate(effect)
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            vb.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vb.vibrate(20)
+        }
     }
 
     private fun showMdnDialog() {
