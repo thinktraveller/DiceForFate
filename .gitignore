@@ -1,6 +1,7 @@
 .gradle/
 app/build/
 android-sdk/
+local.properties
 tools/
 dist/checksums.txt
 archive/*.zip

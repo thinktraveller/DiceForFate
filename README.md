@@ -20,7 +20,9 @@
 
 ## 构建与验证状态
 
-需要 JDK 17、Android SDK Platform 34 及对应构建工具。使用项目 Wrapper：
+需要 JDK 17、Android SDK Platform 34、Build Tools 33.0.1。项目优先使用阿里云 Google Maven / Maven Central 镜像；SDK 组件可从腾讯云 AndroidSDK 镜像安装。
+
+标准环境使用项目 Wrapper：
 
 ```powershell
 .\gradlew.bat testDebugUnitTest assembleDebug
@@ -28,7 +30,9 @@
 
 成功后 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。`dist/` 和 `archive/` 中已有版本属于旧构建，不含本轮功能。
 
-本轮真实 Kotlin 核心及 ViewModel 已经独立编译并验证轮次、候选、事件与历史约束；完整 Android 构建和设备 UI 验收仍待配置 SDK。具体环境诊断、临时隔离 Gradle 缓存命令和待验收项见 `project-docs/buildlog.md`。本轮未发布新 APK。
+2026-09-30 已完成本轮完整 Android Debug 构建，4 个 Gradle 单元测试全部通过，APK 的 v1/v2 签名验证通过。新 APK 在上述 app/build 路径；dist/archive 中的旧 APK 未更新。当前未连接 Android 设备，设备 UI 与端到端验收仍待完成。
+
+本机 SDK 位于 `android-sdk/`，由被 Git 忽略的 `local.properties` 指定；Gradle 使用 `_verify/gradle-home` 隔离缓存避开原用户缓存损坏。镜像安装和本机复现命令见 `project-docs/docs/mirror-install-and-build.md`，构建记录见 `project-docs/buildlog.md`。
 
 ## 源码结构
 
