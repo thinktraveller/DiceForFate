@@ -1,91 +1,43 @@
-# Dice for Fate 项目说明
+# Dice for Fate
 
-## 项目概览
-- 离线随机骰子应用，支持固定骰型与自定义 `mdn` 输入（m∈[1,10]，n∈[2,100]）。
-- 主界面居中显示掷骰结果；m=1 显示单值，m≥2 显示“结果列表 + 总和”。
-- 历史记录在二级界面展示，支持清空；结果与总和字号可分别调节并本地保存。
+离线 Android 掷骰应用，使用本机 SecureRandom，支持普通掷骰、随机事件、当次面值排除和不重复抽取。
 
-## 本轮规则调整
-- 本轮规则变更已实现；详细步骤与验收条件见 [构建计划书](project-docs/project-plan.md)。
+## 选择与投掷
 
-## 根目录文件说明
-- `settings.gradle`：Gradle 子模块声明（包含 `:app`）。
-- `build.gradle`：项目级构建脚本与仓库配置。
-- `gradle.properties`：构建属性（启用 AndroidX、Jetifier、JVM 参数等）。
-- `gradlew` / `gradlew.bat`：Gradle Wrapper 启动脚本，保证可复现构建。
-- `gradle/wrapper/gradle-wrapper.jar` / `gradle/wrapper/gradle-wrapper.properties`：Wrapper 配置与二进制。
+左侧选择骰子个数 `1 / 2 / M`，右侧选择面数 `2 / 3 / 4 / 6 / 10 / 12 / 20 / 100 / M`。
+两处 M 分别输入自定义个数（1–10）与面数（2–100）。选择组合后点击“投掷”；选值、取消输入不会掷骰或推进本轮。
+首次默认 `1d6`，以后记住上次有效选择。主界面可纵向滚动，保留结果/总和字号设置及历史入口。
 
-## 交付与归档
-- `dist/DiceForFate-v1.4.0-debug.apk`：最新调试版 APK。
-- `dist/checksums.txt`：对应 APK 的 SHA-256 校验值。
-- `archive/DiceForFate-v1.4.0-debug.zip`：发行包压缩文件（APK+校验）。
-- `archive/DiceForFate-source-v1.4.0.zip`：源码归档压缩文件。
+## 三种模式
 
-## app 模块
-- `app/build.gradle`：应用模块构建配置与依赖；启用 ViewBinding、Kotlin、AndroidX 等。
-- `app/proguard-rules.pro`：混淆规则（当前为空，可按需扩展）。
+- 随机事件：所有单骰（包含 1d10、1d20、1d100 与自定义面数）均支持，为本次实际可抽到的面值填写非空事件；多骰只显示点数及总和。
+- 当次排除：每次投掷前选择不能出现的面值，成功后下一次重新选择。结果及历史保存本次手动排除项；不会把本轮自动排除伪装成手动排除。
+- 不重复抽取：单骰逐次抽取不同面值；多骰须个数小于面数，同次与跨次均不重复。单骰全部抽完或多骰剩余面值少于个数时结束，例如 2d5 两次后剩 1 个即结束。
 
-### Android 清单
-- `app/src/main/AndroidManifest.xml`：应用清单，注册入口 `MainActivity` 与 `HistoryActivity`，声明震动权限与主题等。
+三个开关可混用。手动排除使候选不足时会提示调整，保留本轮进度；事件只需填写真正可抽到的面值。取消或输入错误均不新增结果/历史。
 
-### 源码目录 `app/src/main/java/com/example/dice/`
-- `DiceRoller.kt`：使用 `SecureRandom` 实现掷骰核心逻辑，生成均匀分布的点数与总和。
-- `HistoryStore.kt`：会话级历史记录共享仓库（`MutableLiveData<List<RollResult>>`），供多个界面订阅与更新。
-- `MainViewModel.kt`：触发掷骰，写入历史，输出当前结果供主界面展示。
-- `MainActivity.kt`：主界面逻辑：
-  - 固定骰型按钮与 `mdn` 对话框（范围提示、动态校验、非法禁用“确定”）。
-  - 结果居中显示，两行文本（结果列表与总和）按 m 值切换显示。
-  - 结果与总和字号滑条，实时生效并持久化到本地。
-- `HistoryActivity.kt`：历史记录二级界面，使用 RecyclerView 展示并支持清空。
-- `ResultFormatter.kt`：结果文本格式化；m=1 返回单值，m≥2 返回两行“结果/总和”。
-- `model/Dice.kt`：骰子模型（`count=m`，`sides=n`）。
-- `model/RollResult.kt`：掷骰结果数据结构（骰型、所有点数、总和、时间戳）。
-- `ui/ResultAdapter.kt`：历史记录列表适配器，渲染每条记录的骰型、结果、总和与时间。
+当前采用的交互默认：关闭不重复开关会暂停同骰型的本轮进度；再次开启继续。应用重启保留本轮。抽完后下次成功投掷自动开始新一轮并提示；成功投掷另一骰型结束旧轮（包含关闭不重复时换骰）。单纯改变选择、取消对话框不清除旧轮。“清除已掷记录”只清除轮次；历史页“清空”只清除会话历史。
 
-### 资源目录 `app/src/main/res/`
-- `layout/activity_main.xml`：主界面布局，包含按钮网格、结果两行显示区、字号调节滑条与历史入口。
-- `layout/activity_history.xml`：历史界面布局，包含 RecyclerView 与清空按钮。
-- `layout/item_roll_result.xml`：历史记录列表项布局。
-- `values/strings.xml`：字符串资源（应用名、提示文案、范围说明、按钮文本等）。
-- `values/colors.xml`：颜色配置（主题色与图标底色）。
-- `values/themes.xml`：主题样式（`Theme.MaterialComponents.DayNight.NoActionBar`）。
-- `values/ic_launcher_background.xml`、`drawable/ic_launcher_foreground.xml`、`mipmap-anydpi-v26/*`：应用图标资源。
+## 构建与验证状态
 
-### 测试目录 `app/src/test/java/com/example/dice/`
-- `DiceRollerTest.kt`：掷骰结果范围与粗略分布测试（均匀性基本检查）。
-- `ResultFormatterTest.kt`：结果文本格式化测试（m=1 单值、m≥2 两行）。
+需要 JDK 17、Android SDK Platform 34 及对应构建工具。使用项目 Wrapper：
 
-## 构建与安装
-- 构建：在已安装 Android SDK 的环境下执行 `./gradlew assembleDebug` 生成 APK。
-- 安装：
-  - 直接在手机上打开 APK 安装；或
-  - 使用 ADB：`adb install -r dist/DiceForFate-v1.4.0-debug.apk`。
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
+```
 
-## 功能要点
-- 固定骰型：`1d2 1d3 1d4 1d6 1d10 1d20 1d100 1d12 2d3 2d4 2d6`。`1d12` 支持随机事件模式。
-- 自定义 `mdn`：m∈[1,10]、n∈[2,100]；非法或为空时禁用“确定”并提示“输入数字不合法”。自定义 `1dn` 支持随机事件模式。
-- 排除模式：开启开关后，点击任意固定骰型或确认自定义骰型，会提示选择当次排除的单颗面值；最多选择 n−1 项。选择只对本次掷骰有效，结果和会话历史显示本次排除项。
-- 随机事件模式：现有 `1d2`、`1d3`、`1d4`、`1d6`，新增的 `1d12` 与自定义 `1dn` 可填写点数对应事件。与排除模式同时开启时，只需填写未排除面值的事件；取消填写不产生记录。
-- 显示规则：m=1 仅显示单个结果；m≥2 显示所有点数与总和（两行）。
-- 字号调节：结果与总和的字号滑条独立，设置持久化到本地。
-- 历史记录：二级界面列表展示，支持清空。
+成功后 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。`dist/` 和 `archive/` 中已有版本属于旧构建，不含本轮功能。
 
-## 备注
-- 项目不依赖网络，所有随机均在本地使用 `SecureRandom` 生成。
-- `tools/gradle-8.1.1/` 为本地临时工具残留，归档时可忽略，不参与构建。
+本轮真实 Kotlin 核心及 ViewModel 已经独立编译并验证轮次、候选、事件与历史约束；完整 Android 构建和设备 UI 验收仍待配置 SDK。具体环境诊断、临时隔离 Gradle 缓存命令和待验收项见 `project-docs/buildlog.md`。本轮未发布新 APK。
 
-## 更新日志
-- v1.6.0
-  - 将“抽签模式”更名为“随机事件模式”，主界面开关与文案统一
-  - 保持抽签流程与事件填写逻辑不变
-- v1.5.0
-  - 新增抽签模式（默认开启）：支持 1d2/1d3/1d4/1d6，填写每个点数对应事件；显示“点数+事件”，历史记录展示事件
-  - 为 `RollResult` 增加 `event` 字段，适配历史项显示
-- v1.4.0
-  - 结果与总和字号分开调节，设置持久化到本地
-- v1.3.0
-  - 调整 MDN 范围：m∈[2,10]，n∈[2,100]；对话框动态校验并禁用“确定”
-- v1.2.0
-  - 结果与总和居中加粗显示；m=1 仅显示单值，m≥2 显示两行“结果/总和”
-- v1.1.0
-  - UI 更名为“Dice for Fate”；历史迁移至二级界面；新增 MDN 自定义输入；移除 1d5
+## 源码结构
+
+- `DiceRoller.kt`：安全随机取样，支持普通独立取样与无放回取样。
+- `DrawRound.kt`：轮次快照、候选计算、前置校验与成功提交。
+- `MainViewModel.kt`：整合当前结果、轮次和会话历史。
+- `MainActivity.kt`：双列选择器、模式开关、输入与结果显示、本地轮次保存。
+- `HistoryStore.kt`、`HistoryActivity.kt`：会话历史及独立清空。
+- `model/`、`ResultFormatter.kt`、`ui/ResultAdapter.kt`：结果模型、文本格式化与历史展示。
+- `app/src/main/res/layout/activity_main.xml`：可滚动的主界面及字号调节。
+
+项目构建日志在独立 `project-docs` 仓库；临时验证脚本统一在被 Git 忽略的 `_verify/`，验证后删除。

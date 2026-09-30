@@ -17,6 +17,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var binding: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
 
+    private var selectedCount = 1
+    private var selectedSides = 6
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -24,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
         vm.current.observe(this) { r ->
             if (r != null) {
+                binding.tvResultDice.text = "本次结果：${r.dice.count}d${r.dice.sides}"
                 if (r.event != null) {
                     binding.tvResultLine.text = "点数: ${r.rolls.first()}"
                     binding.tvSumLine.text = r.event
@@ -72,23 +76,21 @@ class MainActivity : ComponentActivity() {
             renderRound()
         }
 
-        binding.btn1d2.setOnClickListener { vibrate(); startRoll(1, 2, true) }
-        binding.btn1d3.setOnClickListener { vibrate(); startRoll(1, 3, true) }
-        binding.btn1d4.setOnClickListener { vibrate(); startRoll(1, 4, true) }
-        binding.btn1d6.setOnClickListener { vibrate(); startRoll(1, 6, true) }
-        binding.btn1d10.setOnClickListener { vibrate(); startRoll(1, 10) }
-        binding.btn1d20.setOnClickListener { vibrate(); startRoll(1, 20) }
-        binding.btn1d100.setOnClickListener { vibrate(); startRoll(1, 100) }
-        binding.btn1d12.setOnClickListener { vibrate(); startRoll(1, 12, true) }
-        binding.btn2d3.setOnClickListener { vibrate(); startRoll(2, 3) }
-        binding.btn2d4.setOnClickListener { vibrate(); startRoll(2, 4) }
-        binding.btn2d6.setOnClickListener { vibrate(); startRoll(2, 6) }
-        binding.btnMdn.setOnClickListener { showMdnDialog() }
+        selectedCount = prefs.getInt("selected_count", 1).takeIf { it in 1..10 } ?: 1
+        selectedSides = prefs.getInt("selected_sides", 6).takeIf { it in 2..100 } ?: 6
+        setupOptions(binding.countOptions, listOf(1, 2), true)
+        setupOptions(binding.sideOptions, listOf(2, 3, 4, 6, 10, 12, 20, 100), false)
+        binding.btnCustomCount.setOnClickListener { showNumberDialog(true) }
+        binding.btnCustomSides.setOnClickListener { showNumberDialog(false) }
+        binding.btnRoll.setOnClickListener { vibrate(); startRoll(selectedCount, selectedSides, selectedCount == 1) }
+        renderSelection()
         binding.btnHistory.setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
 
         val base = 18
         val resultSize = prefs.getInt("result_text_size_sp", 30)
         val sumSize = prefs.getInt("sum_text_size_sp", 24)
+        binding.sbResultSize.contentDescription = "结果字号"
+        binding.sbSumSize.contentDescription = "总和或事件字号"
         binding.sbResultSize.progress = resultSize - base
         binding.sbSumSize.progress = sumSize - base
         binding.tvResultSizeLabel.text = getString(R.string.font_size_label, resultSize)
@@ -246,77 +248,75 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showMdnDialog() {
-        val container = android.widget.LinearLayout(this)
-        container.orientation = android.widget.LinearLayout.VERTICAL
-        container.setPadding(40, 20, 40, 0)
+    private fun setupOptions(group: android.widget.RadioGroup, values: List<Int>, count: Boolean) {
+        values.forEach { value ->
+            val option = android.widget.RadioButton(this).apply {
+                id = android.view.View.generateViewId()
+                tag = value
+                text = value.toString()
+                contentDescription = if (count) "$value 颗骰子" else "$value 个面"
+                minHeight = (48 * resources.displayMetrics.density).toInt()
+                setOnClickListener {
+                    if (count) selectedCount = value else selectedSides = value
+                    renderSelection()
+                }
+            }
+            group.addView(option)
+        }
+    }
 
-        val mLayout = com.google.android.material.textfield.TextInputLayout(this)
-        val mEdit = com.google.android.material.textfield.TextInputEditText(mLayout.context)
-        mLayout.hint = getString(R.string.hint_m_range)
-        mEdit.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-        mLayout.addView(mEdit)
+    private fun renderSelection() {
+        fun check(group: android.widget.RadioGroup, value: Int) {
+            group.clearCheck()
+            for (index in 0 until group.childCount) {
+                val option = group.getChildAt(index) as android.widget.RadioButton
+                if (option.tag == value) group.check(option.id)
+            }
+        }
+        check(binding.countOptions, selectedCount)
+        check(binding.sideOptions, selectedSides)
+        binding.btnCustomCount.text = if (selectedCount in listOf(1,2)) "M · 自定义个数" else "M · 已选 $selectedCount 颗"
+        binding.btnCustomSides.text = if (selectedSides in listOf(2,3,4,6,10,12,20,100)) "M · 自定义面数" else "M · 已选 $selectedSides 面"
+        binding.tvSelection.text = "当前骰型：${selectedCount}d$selectedSides"
+        binding.btnRoll.text = "投掷 ${selectedCount}d$selectedSides"
+        binding.tvEventHint.text = if (selectedCount == 1) "随机事件支持所有单骰；仅填写本次可抽到的面值。" else "随机事件仅支持单骰；当前多骰按点数投掷。"
+        getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
+            .putInt("selected_count", selectedCount).putInt("selected_sides", selectedSides).apply()
+    }
 
-        val nLayout = com.google.android.material.textfield.TextInputLayout(this)
-        val nEdit = com.google.android.material.textfield.TextInputEditText(nLayout.context)
-        nLayout.hint = getString(R.string.hint_n_range)
-        nEdit.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-        nLayout.addView(nEdit)
-
-        container.addView(mLayout)
-        container.addView(nLayout)
-
+    private fun showNumberDialog(count: Boolean) {
+        val layout = com.google.android.material.textfield.TextInputLayout(this)
+        layout.setPadding(40, 20, 40, 0)
+        layout.hint = if (count) "骰子个数（1–10）" else "骰子面数（2–100）"
+        val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
+        edit.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        layout.addView(edit)
+        val range = if (count) 1..10 else 2..100
         val dialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.mdn))
-            .setView(container)
-            .setPositiveButton(getString(R.string.confirm), null)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
+            .setTitle(if (count) "自定义骰子个数" else "自定义骰子面数")
+            .setView(layout).setPositiveButton(R.string.confirm, null)
+            .setNegativeButton(R.string.cancel, null).create()
         dialog.setOnShowListener {
             val ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            ok.isEnabled = false
-
-            fun validate(): Boolean {
-                val m = mEdit.text?.toString()?.toIntOrNull()
-                val n = nEdit.text?.toString()?.toIntOrNull()
-                var valid = true
-                if (m == null || m !in 1..10) {
-                    mLayout.error = getString(R.string.invalid_input)
-                    valid = false
-                } else {
-                    mLayout.error = null
-                }
-                if (n == null || n !in 2..100) {
-                    nLayout.error = getString(R.string.invalid_input)
-                    valid = false
-                } else {
-                    nLayout.error = null
-                }
-                ok.isEnabled = valid
-                return valid
+            fun validate(): Int? {
+                val value = edit.text?.toString()?.toIntOrNull()?.takeIf { it in range }
+                layout.error = if (value == null) "请输入 ${range.first}–${range.last} 的整数" else null
+                ok.isEnabled = value != null
+                return value
             }
-
-            val watcher = object : android.text.TextWatcher {
+            edit.addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                 override fun afterTextChanged(s: android.text.Editable?) { validate() }
-            }
-
-            mEdit.addTextChangedListener(watcher)
-            nEdit.addTextChangedListener(watcher)
-
+            })
+            ok.isEnabled = false
             ok.setOnClickListener {
-                if (validate()) {
-                    val mVal = mEdit.text?.toString()?.toInt() ?: return@setOnClickListener
-                    val nVal = nEdit.text?.toString()?.toInt() ?: return@setOnClickListener
-                    vibrate()
-                    dialog.dismiss()
-                    startRoll(mVal, nVal, mVal == 1)
-                }
+                val value = validate() ?: return@setOnClickListener
+                if (count) selectedCount = value else selectedSides = value
+                renderSelection()
+                dialog.dismiss()
             }
         }
-
         dialog.show()
     }
 }

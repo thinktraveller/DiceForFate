@@ -1,83 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="12dp">
-
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Dice for Fate"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:paddingBottom="8dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingBottom="8dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/lottery_mode_label"
-            android:textSize="16sp"
-            android:paddingRight="12dp" />
-
-        <Switch
-            android:id="@+id/switchLottery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="16dp">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Dice for Fate" android:textStyle="bold" android:textSize="24sp" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="先选择个数与面数，再投掷" android:textSize="16sp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:baselineAligned="false">
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:paddingEnd="8dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="骰子个数" android:textStyle="bold" android:textSize="18sp" />
+            <RadioGroup android:id="@+id/countOptions" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <Button android:id="@+id/btnCustomCount" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="M · 自定义个数" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="骰子面数" android:textStyle="bold" android:textSize="18sp" />
+            <RadioGroup android:id="@+id/sideOptions" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+            <Button android:id="@+id/btnCustomSides" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="M · 自定义面数" />
+        </LinearLayout>
     </LinearLayout>
-
-    <Switch
-        android:id="@+id/switchExclusion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="8dp"
-        android:text="@string/exclusion_mode_label" />
-
+    <TextView android:id="@+id/tvSelection" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="20sp" android:textStyle="bold" android:accessibilityLiveRegion="polite" />
+    <Switch android:id="@+id/switchLottery" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="随机事件" />
+    <TextView android:id="@+id/tvEventHint" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <Switch android:id="@+id/switchExclusion" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="当次排除" />
     <Switch android:id="@+id/switchNoRepeat" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="不重复抽取" />
+    <Button android:id="@+id/btnRoll" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="投掷" />
     <TextView android:id="@+id/tvRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:accessibilityLiveRegion="polite" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="关闭开关暂停本轮；重启保留进度。抽完后下次成功投掷开启新一轮。成功投掷另一骰型结束旧轮。" />
     <Button android:id="@+id/btnClearRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="清除已掷记录（保留历史）" />
-    <GridLayout
-        android:id="@+id/diceGrid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="4"
-        android:rowCount="4"
-        android:alignmentMode="alignMargins"
-        android:useDefaultMargins="true">
-
-        <Button android:id="@+id/btn1d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d2" />
-        <Button android:id="@+id/btn1d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d3" />
-        <Button android:id="@+id/btn1d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d4" />
-        <Button android:id="@+id/btn1d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d6" />
-        <Button android:id="@+id/btn1d10" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d10" />
-        <Button android:id="@+id/btn1d20" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d20" />
-        <Button android:id="@+id/btn1d100" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d100" />
-        <Button android:id="@+id/btn1d12" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d12" />
-        <Button android:id="@+id/btn2d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d3" />
-        <Button android:id="@+id/btn2d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d4" />
-        <Button android:id="@+id/btn2d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d6" />
-        <Button android:id="@+id/btnMdn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="@string/mdn" />
-
-    </GridLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingTop="12dp">
 
+        <TextView android:id="@+id/tvResultDice" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:accessibilityLiveRegion="polite" />
         <TextView
             android:id="@+id/tvResultLine"
             android:layout_width="match_parent"
@@ -119,7 +75,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingTop="8dp">
 
         <TextView
@@ -131,9 +87,9 @@
 
         <SeekBar
             android:id="@+id/sbResultSize"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:minHeight="48dp"
             android:max="22" />
 
     </LinearLayout>
@@ -141,7 +97,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingTop="4dp">
 
         <TextView
@@ -153,11 +109,12 @@
 
         <SeekBar
             android:id="@+id/sbSumSize"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:minHeight="48dp"
             android:max="22" />
 
     </LinearLayout>
 
     </LinearLayout>
+</ScrollView>
