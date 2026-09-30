@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
             }
             val dialog = AlertDialog.Builder(this)
                 .setTitle("填写事件")
-                .setView(container)
+                .setView(android.widget.ScrollView(this).apply { addView(container) })
                 .setPositiveButton("开始抽签", null)
                 .setNegativeButton(getString(R.string.cancel), null)
                 .create()
@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity() {
         binding.btn1d10.setOnClickListener { vibrate(); vm.roll(1, 10) }
         binding.btn1d20.setOnClickListener { vibrate(); vm.roll(1, 20) }
         binding.btn1d100.setOnClickListener { vibrate(); vm.roll(1, 100) }
-        binding.btn2d2.setOnClickListener { vibrate(); vm.roll(2, 2) }
+        binding.btn1d12.setOnClickListener { vibrate(); handleLottery(12) }
         binding.btn2d3.setOnClickListener { vibrate(); vm.roll(2, 3) }
         binding.btn2d4.setOnClickListener { vibrate(); vm.roll(2, 4) }
         binding.btn2d6.setOnClickListener { vibrate(); vm.roll(2, 6) }

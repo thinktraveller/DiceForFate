@@ -51,7 +51,7 @@
         <Button android:id="@+id/btn1d10" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d10" />
         <Button android:id="@+id/btn1d20" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d20" />
         <Button android:id="@+id/btn1d100" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d100" />
-        <Button android:id="@+id/btn2d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d2" />
+        <Button android:id="@+id/btn1d12" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d12" />
         <Button android:id="@+id/btn2d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d3" />
         <Button android:id="@+id/btn2d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d4" />
         <Button android:id="@+id/btn2d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d6" />
