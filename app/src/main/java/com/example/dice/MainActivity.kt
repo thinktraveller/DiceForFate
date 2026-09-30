@@ -16,6 +16,7 @@ import android.content.Intent
 class MainActivity : ComponentActivity() {
     private lateinit var binding: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
+    private lateinit var handleLottery: (Int) -> Unit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +50,7 @@ class MainActivity : ComponentActivity() {
             prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
         }
 
-        fun handleLottery(sides: Int) {
+        handleLottery = fun(sides: Int) {
             if (!binding.switchLottery.isChecked) { vm.roll(1, sides); return }
             val container = android.widget.LinearLayout(this)
             container.orientation = android.widget.LinearLayout.VERTICAL
@@ -192,7 +193,7 @@ class MainActivity : ComponentActivity() {
                 val m = mEdit.text?.toString()?.toIntOrNull()
                 val n = nEdit.text?.toString()?.toIntOrNull()
                 var valid = true
-                if (m == null || m !in 2..10) {
+                if (m == null || m !in 1..10) {
                     mLayout.error = getString(R.string.invalid_input)
                     valid = false
                 } else {
@@ -221,7 +222,8 @@ class MainActivity : ComponentActivity() {
                 if (validate()) {
                     val mVal = mEdit.text?.toString()?.toInt() ?: return@setOnClickListener
                     val nVal = nEdit.text?.toString()?.toInt() ?: return@setOnClickListener
-                    vibrate(); vm.roll(mVal, nVal)
+                    vibrate()
+                    if (mVal == 1) handleLottery(nVal) else vm.roll(mVal, nVal)
                     dialog.dismiss()
                 }
             }

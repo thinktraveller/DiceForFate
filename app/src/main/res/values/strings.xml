@@ -11,7 +11,7 @@
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
     <string name="invalid_input">输入数字不合法</string>
-    <string name="hint_m_range">骰子数 m (2≤m≤10)</string>
+    <string name="hint_m_range">骰子数 m (1≤m≤10)</string>
     <string name="hint_n_range">骰子面数 n (2≤n≤100)</string>
     <string name="font_size_label">字号: %1$dsp</string>
     <string name="result_size">结果字号</string>
