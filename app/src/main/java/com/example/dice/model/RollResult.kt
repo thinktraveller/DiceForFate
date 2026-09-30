@@ -5,5 +5,6 @@ data class RollResult(
     val rolls: List<Int>,
     val sum: Int,
     val timestamp: Long,
-    val event: String? = null
+    val event: String? = null,
+    val excludedFaces: List<Int> = emptyList()
 )

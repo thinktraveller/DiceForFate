@@ -11,8 +11,9 @@ class MainViewModel : ViewModel() {
     private val _current = MutableLiveData<RollResult?>(null)
     val current: LiveData<RollResult?> = _current
 
-    fun roll(count: Int, sides: Int) {
-        val result = diceRoller.roll(Dice(count, sides))
+    fun roll(count: Int, sides: Int, excludedFaces: Set<Int> = emptySet(), events: Map<Int, String> = emptyMap()) {
+        val baseResult = diceRoller.roll(Dice(count, sides), excludedFaces)
+        val result = if (events.isEmpty()) baseResult else baseResult.copy(event = events[baseResult.rolls.first()])
         HistoryStore.add(result)
         _current.value = result
     }

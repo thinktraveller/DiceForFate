@@ -16,7 +16,6 @@ import android.content.Intent
 class MainActivity : ComponentActivity() {
     private lateinit var binding: ActivityMainBinding
     private val vm: MainViewModel by viewModels()
-    private lateinit var handleLottery: (Int) -> Unit
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +39,8 @@ class MainActivity : ComponentActivity() {
                         binding.tvSumLine.visibility = android.view.View.VISIBLE
                     }
                 }
+                binding.tvExcludedLine.visibility = if (r.excludedFaces.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+                binding.tvExcludedLine.text = "排除面值: ${r.excludedFaces.joinToString(", ")}"
             }
         }
 
@@ -50,67 +51,17 @@ class MainActivity : ComponentActivity() {
             prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
         }
 
-        handleLottery = fun(sides: Int) {
-            if (!binding.switchLottery.isChecked) { vm.roll(1, sides); return }
-            val container = android.widget.LinearLayout(this)
-            container.orientation = android.widget.LinearLayout.VERTICAL
-            container.setPadding(40, 20, 40, 0)
-            val inputs = ArrayList<com.google.android.material.textfield.TextInputEditText>()
-            repeat(sides) { idx ->
-                val layout = com.google.android.material.textfield.TextInputLayout(this)
-                layout.hint = "点数 ${idx + 1} 对应事件"
-                val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
-                edit.inputType = android.text.InputType.TYPE_CLASS_TEXT
-                layout.addView(edit)
-                container.addView(layout)
-                inputs.add(edit)
-            }
-            val dialog = AlertDialog.Builder(this)
-                .setTitle("填写事件")
-                .setView(android.widget.ScrollView(this).apply { addView(container) })
-                .setPositiveButton("开始抽签", null)
-                .setNegativeButton(getString(R.string.cancel), null)
-                .create()
-            dialog.setOnShowListener {
-                val ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                fun validate(): Boolean {
-                    return inputs.all { !it.text.isNullOrBlank() }
-                }
-                val watcher = object : android.text.TextWatcher {
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                    override fun afterTextChanged(s: android.text.Editable?) { ok.isEnabled = validate() }
-                }
-                inputs.forEach { it.addTextChangedListener(watcher) }
-                ok.isEnabled = validate()
-                ok.setOnClickListener {
-                    if (validate()) {
-                        vibrate()
-                        val labels = inputs.map { it.text.toString() }
-                        val result = DiceRoller().roll(com.example.dice.model.Dice(1, sides))
-                        val rolled = result.rolls.first()
-                        val eventText = labels[rolled - 1]
-                        val withEvent = result.copy(event = eventText)
-                        HistoryStore.add(withEvent)
-                        vm.setCurrent(withEvent)
-                        dialog.dismiss()
-                    }
-                }
-            }
-            dialog.show()
-        }
-
-        binding.btn1d2.setOnClickListener { vibrate(); handleLottery(2) }
-        binding.btn1d3.setOnClickListener { vibrate(); handleLottery(3) }
-        binding.btn1d4.setOnClickListener { vibrate(); handleLottery(4) }
-        binding.btn1d6.setOnClickListener { vibrate(); handleLottery(6) }
-        binding.btn1d10.setOnClickListener { vibrate(); vm.roll(1, 10) }
-        binding.btn1d20.setOnClickListener { vibrate(); vm.roll(1, 20) }
-        binding.btn1d100.setOnClickListener { vibrate(); vm.roll(1, 100) }
-        binding.btn1d12.setOnClickListener { vibrate(); handleLottery(12) }
-        binding.btn2d3.setOnClickListener { vibrate(); vm.roll(2, 3) }
-        binding.btn2d4.setOnClickListener { vibrate(); vm.roll(2, 4) }
-        binding.btn2d6.setOnClickListener { vibrate(); vm.roll(2, 6) }
+        binding.btn1d2.setOnClickListener { vibrate(); startRoll(1, 2, true) }
+        binding.btn1d3.setOnClickListener { vibrate(); startRoll(1, 3, true) }
+        binding.btn1d4.setOnClickListener { vibrate(); startRoll(1, 4, true) }
+        binding.btn1d6.setOnClickListener { vibrate(); startRoll(1, 6, true) }
+        binding.btn1d10.setOnClickListener { vibrate(); startRoll(1, 10) }
+        binding.btn1d20.setOnClickListener { vibrate(); startRoll(1, 20) }
+        binding.btn1d100.setOnClickListener { vibrate(); startRoll(1, 100) }
+        binding.btn1d12.setOnClickListener { vibrate(); startRoll(1, 12, true) }
+        binding.btn2d3.setOnClickListener { vibrate(); startRoll(2, 3) }
+        binding.btn2d4.setOnClickListener { vibrate(); startRoll(2, 4) }
+        binding.btn2d6.setOnClickListener { vibrate(); startRoll(2, 6) }
         binding.btnMdn.setOnClickListener { showMdnDialog() }
         binding.btnHistory.setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
 
@@ -145,6 +96,89 @@ class MainActivity : ComponentActivity() {
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
         })
+    }
+
+    private fun startRoll(count: Int, sides: Int, eventCapable: Boolean = false) {
+        if (!binding.switchExclusion.isChecked) {
+            finishRoll(count, sides, eventCapable, emptySet())
+            return
+        }
+        val selected = sortedSetOf<Int>()
+        val labels = Array(sides) { (it + 1).toString() }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.exclusion_dialog_title)
+            .setMultiChoiceItems(labels, null) { dialogInterface, index, checked ->
+                val face = index + 1
+                if (checked && selected.size == sides - 1) {
+                    (dialogInterface as AlertDialog).listView.setItemChecked(index, false)
+                    android.widget.Toast.makeText(this, R.string.exclusion_limit, android.widget.Toast.LENGTH_SHORT).show()
+                } else if (checked) {
+                    selected.add(face)
+                } else {
+                    selected.remove(face)
+                }
+            }
+            .setPositiveButton(R.string.continue_roll, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val excludedFaces = selected.toSet()
+                dialog.dismiss()
+                finishRoll(count, sides, eventCapable, excludedFaces)
+            }
+        }
+        dialog.show()
+    }
+
+    private fun finishRoll(count: Int, sides: Int, eventCapable: Boolean, excludedFaces: Set<Int>) {
+        if (eventCapable && binding.switchLottery.isChecked) {
+            showEventDialog(count, sides, excludedFaces)
+        } else {
+            vm.roll(count, sides, excludedFaces)
+        }
+    }
+
+    private fun showEventDialog(count: Int, sides: Int, excludedFaces: Set<Int>) {
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 0)
+        }
+        val inputs = linkedMapOf<Int, com.google.android.material.textfield.TextInputEditText>()
+        (1..sides).filterNot { it in excludedFaces }.forEach { face ->
+            val layout = com.google.android.material.textfield.TextInputLayout(this)
+            layout.hint = getString(R.string.event_for_face, face)
+            val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
+            edit.inputType = android.text.InputType.TYPE_CLASS_TEXT
+            layout.addView(edit)
+            container.addView(layout)
+            inputs[face] = edit
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.event_dialog_title)
+            .setView(android.widget.ScrollView(this).apply { addView(container) })
+            .setPositiveButton(R.string.draw_event, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        dialog.setOnShowListener {
+            val ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            fun valid() = inputs.values.all { !it.text.isNullOrBlank() }
+            val watcher = object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) { ok.isEnabled = valid() }
+            }
+            inputs.values.forEach { it.addTextChangedListener(watcher) }
+            ok.isEnabled = valid()
+            ok.setOnClickListener {
+                if (valid()) {
+                    val events = inputs.mapValues { it.value.text.toString() }
+                    vm.roll(count, sides, excludedFaces, events)
+                    dialog.dismiss()
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun copyToClipboard(result: RollResult) {
@@ -223,8 +257,8 @@ class MainActivity : ComponentActivity() {
                     val mVal = mEdit.text?.toString()?.toInt() ?: return@setOnClickListener
                     val nVal = nEdit.text?.toString()?.toInt() ?: return@setOnClickListener
                     vibrate()
-                    if (mVal == 1) handleLottery(nVal) else vm.roll(mVal, nVal)
                     dialog.dismiss()
+                    startRoll(mVal, nVal, mVal == 1)
                 }
             }
         }

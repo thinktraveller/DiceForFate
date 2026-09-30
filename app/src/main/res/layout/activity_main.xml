@@ -35,6 +35,13 @@
 
     </LinearLayout>
 
+    <Switch
+        android:id="@+id/switchExclusion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:text="@string/exclusion_mode_label" />
+
     <GridLayout
         android:id="@+id/diceGrid"
         android:layout_width="match_parent"
@@ -86,6 +93,15 @@
             android:gravity="center"
             android:textAlignment="center"
             android:lineSpacingExtra="4dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvExcludedLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textSize="16sp"
             android:visibility="gone" />
 
     </LinearLayout>
