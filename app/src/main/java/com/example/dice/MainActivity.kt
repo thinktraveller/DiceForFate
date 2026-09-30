@@ -30,14 +30,20 @@ class MainActivity : ComponentActivity() {
         setContentView(binding.root)
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars() or androidx.core.view.WindowInsetsCompat.Type.displayCutout())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
         settingsDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
         settingsBinding = SheetSettingsBinding.inflate(settingsDialog.layoutInflater)
         settingsDialog.setContentView(settingsBinding.root)
+        settingsDialog.setOnDismissListener {
+            binding.btnSettings.requestFocus()
+            androidx.core.view.ViewCompat.performAccessibilityAction(binding.btnSettings,
+                androidx.core.view.accessibility.AccessibilityNodeInfoCompat.ACTION_ACCESSIBILITY_FOCUS, null)
+        }
         binding.btnSettings.setOnClickListener {
+            settingsDialog.behavior.maxHeight = (binding.root.height * 0.9f).toInt()
             settingsDialog.show()
             settingsDialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
         }
@@ -107,6 +113,7 @@ class MainActivity : ComponentActivity() {
         renderResult(vm.current.value)
         binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, sumSize.toFloat())
         settingsBinding.tvFontPreview.textSize = sumSize.toFloat()
+        settingsBinding.tvResultFontPreview.textSize = resultSize.toFloat()
 
         settingsBinding.sbResultSize.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
@@ -114,6 +121,7 @@ class MainActivity : ComponentActivity() {
                 resultTextSize = size
                 settingsBinding.tvResultSizeLabel.text = "结果字号：${size}sp"
                 renderResult(vm.current.value)
+                settingsBinding.tvResultFontPreview.textSize = size.toFloat()
                 prefs.edit().putInt("result_text_size_sp", size).apply()
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -167,6 +175,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         dialog.show()
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
     private fun finishRoll(count: Int, sides: Int, eventCapable: Boolean, excludedFaces: Set<Int>) {
@@ -217,6 +226,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         dialog.show()
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
     private fun renderRound() {
@@ -423,5 +433,12 @@ class MainActivity : ComponentActivity() {
             }
         }
         dialog.show()
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+    }
+
+    override fun onDestroy() {
+        settingsDialog.setOnDismissListener(null)
+        settingsDialog.dismiss()
+        super.onDestroy()
     }
 }
