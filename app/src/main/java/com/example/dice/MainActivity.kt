@@ -9,51 +9,57 @@ import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import com.example.dice.databinding.ActivityMainBinding
+import com.example.dice.databinding.SheetSettingsBinding
 import com.example.dice.model.RollResult
 import android.app.AlertDialog
 import android.content.Intent
 
 class MainActivity : ComponentActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var settingsBinding: SheetSettingsBinding
+    private lateinit var settingsDialog: com.google.android.material.bottomsheet.BottomSheetDialog
     private val vm: MainViewModel by viewModels()
 
     private var selectedCount = 1
     private var selectedSides = 6
+    private var resultTextSize = 30
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+        settingsDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        settingsBinding = SheetSettingsBinding.inflate(settingsDialog.layoutInflater)
+        settingsDialog.setContentView(settingsBinding.root)
+        binding.btnSettings.setOnClickListener {
+            settingsDialog.show()
+            settingsDialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+        }
+        settingsBinding.btnClose.setOnClickListener { settingsDialog.dismiss() }
+        binding.btnRoundDetails.setOnClickListener { showRoundDetails() }
+        binding.resultGrid.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) renderResult(vm.current.value)
+        }
 
         vm.current.observe(this) { r ->
-            if (r != null) {
-                binding.tvResultDice.text = "本次结果：${r.dice.count}d${r.dice.sides}"
-                if (r.event != null) {
-                    binding.tvResultLine.text = "点数: ${r.rolls.first()}"
-                    binding.tvSumLine.text = r.event
-                    binding.tvSumLine.visibility = android.view.View.VISIBLE
-                } else {
-                    val m = r.dice.count
-                    if (m == 1) {
-                        binding.tvResultLine.text = r.rolls.first().toString()
-                        binding.tvSumLine.visibility = android.view.View.GONE
-                    } else {
-                        binding.tvResultLine.text = "结果: ${r.rolls.joinToString(", ")}"
-                        binding.tvSumLine.text = "总和: ${r.sum}"
-                        binding.tvSumLine.visibility = android.view.View.VISIBLE
-                    }
-                }
-                binding.tvExcludedLine.visibility = if (r.excludedFaces.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
-                binding.tvExcludedLine.text = "排除面值: ${r.excludedFaces.joinToString(", ")}"
-            }
+            renderResult(r)
+            if (r != null) binding.tvResultDice.announceForAccessibility(ResultFormatter.format(r))
         }
 
         val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
         val lotteryEnabled = prefs.getBoolean("lottery_mode_enabled", true)
-        binding.switchLottery.isChecked = lotteryEnabled
-        binding.switchLottery.setOnCheckedChangeListener { _, isChecked ->
+        settingsBinding.switchLottery.isChecked = lotteryEnabled
+        settingsBinding.switchLottery.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
+            renderModes()
         }
+        settingsBinding.switchExclusion.setOnCheckedChangeListener { _, _ -> renderModes() }
 
         val savedRound = runCatching {
             val count = prefs.getInt("round_count", 0)
@@ -63,23 +69,25 @@ class MainActivity : ComponentActivity() {
             )
         }.getOrNull()
         vm.restoreRound(savedRound)
-        binding.switchNoRepeat.isChecked = prefs.getBoolean("no_repeat", false)
-        binding.switchNoRepeat.setOnCheckedChangeListener { _, checked ->
+        settingsBinding.switchNoRepeat.isChecked = prefs.getBoolean("no_repeat", false)
+        settingsBinding.switchNoRepeat.setOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("no_repeat", checked).apply()
             renderRound()
+            renderModes()
         }
-        binding.btnClearRound.setOnClickListener { vm.clearRound() }
+        settingsBinding.btnClearRound.setOnClickListener { vm.clearRound() }
         vm.round.observe(this) { round ->
             prefs.edit().putInt("round_count", round?.dice?.count ?: 0)
                 .putInt("round_sides", round?.dice?.sides ?: 0)
                 .putString("round_drawn", round?.drawn?.sorted()?.joinToString(",") ?: "").apply()
             renderRound()
+            renderModes()
         }
 
         selectedCount = prefs.getInt("selected_count", 1).takeIf { it in 1..10 } ?: 1
         selectedSides = prefs.getInt("selected_sides", 6).takeIf { it in 2..100 } ?: 6
         setupOptions(binding.countOptions, listOf(1, 2), true)
-        setupOptions(binding.sideOptions, listOf(2, 3, 4, 6, 10, 12, 20, 100), false)
+        setupSideOptions()
         binding.btnCustomCount.setOnClickListener { showNumberDialog(true) }
         binding.btnCustomSides.setOnClickListener { showNumberDialog(false) }
         binding.btnRoll.setOnClickListener { vibrate(); startRoll(selectedCount, selectedSides, selectedCount == 1) }
@@ -87,33 +95,37 @@ class MainActivity : ComponentActivity() {
         binding.btnHistory.setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
 
         val base = 18
-        val resultSize = prefs.getInt("result_text_size_sp", 30)
-        val sumSize = prefs.getInt("sum_text_size_sp", 24)
-        binding.sbResultSize.contentDescription = "结果字号"
-        binding.sbSumSize.contentDescription = "总和或事件字号"
-        binding.sbResultSize.progress = resultSize - base
-        binding.sbSumSize.progress = sumSize - base
-        binding.tvResultSizeLabel.text = getString(R.string.font_size_label, resultSize)
-        binding.tvSumSizeLabel.text = getString(R.string.font_size_label, sumSize)
-        binding.tvResultLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, resultSize.toFloat())
+        val resultSize = prefs.getInt("result_text_size_sp", 30).coerceIn(18, 40)
+        val sumSize = prefs.getInt("sum_text_size_sp", 24).coerceIn(18, 40)
+        resultTextSize = resultSize
+        settingsBinding.sbResultSize.contentDescription = "结果字号"
+        settingsBinding.sbSumSize.contentDescription = "总和或事件字号"
+        settingsBinding.sbResultSize.progress = resultSize - base
+        settingsBinding.sbSumSize.progress = sumSize - base
+        settingsBinding.tvResultSizeLabel.text = "结果字号：${resultSize}sp"
+        settingsBinding.tvSumSizeLabel.text = "总和 / 事件字号：${sumSize}sp"
+        renderResult(vm.current.value)
         binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, sumSize.toFloat())
+        settingsBinding.tvFontPreview.textSize = sumSize.toFloat()
 
-        binding.sbResultSize.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+        settingsBinding.sbResultSize.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 val size = base + progress
-                binding.tvResultSizeLabel.text = getString(R.string.font_size_label, size)
-                binding.tvResultLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                resultTextSize = size
+                settingsBinding.tvResultSizeLabel.text = "结果字号：${size}sp"
+                renderResult(vm.current.value)
                 prefs.edit().putInt("result_text_size_sp", size).apply()
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
         })
 
-        binding.sbSumSize.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+        settingsBinding.sbSumSize.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 val size = base + progress
-                binding.tvSumSizeLabel.text = getString(R.string.font_size_label, size)
+                settingsBinding.tvSumSizeLabel.text = "总和 / 事件字号：${size}sp"
                 binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                settingsBinding.tvFontPreview.textSize = size.toFloat()
                 prefs.edit().putInt("sum_text_size_sp", size).apply()
             }
             override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
@@ -122,8 +134,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startRoll(count: Int, sides: Int, eventCapable: Boolean = false) {
-        if (!guard { vm.available(count, sides, emptySet(), binding.switchNoRepeat.isChecked) }) return
-        if (!binding.switchExclusion.isChecked) {
+        if (!guard { vm.available(count, sides, emptySet(), settingsBinding.switchNoRepeat.isChecked) }) return
+        if (!settingsBinding.switchExclusion.isChecked) {
             finishRoll(count, sides, eventCapable, emptySet())
             return
         }
@@ -148,7 +160,7 @@ class MainActivity : ComponentActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val excludedFaces = selected.toSet()
-                if (guard { vm.available(count, sides, excludedFaces, binding.switchNoRepeat.isChecked) }) {
+                if (guard { vm.available(count, sides, excludedFaces, settingsBinding.switchNoRepeat.isChecked) }) {
                     dialog.dismiss()
                     finishRoll(count, sides, eventCapable, excludedFaces)
                 }
@@ -158,7 +170,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun finishRoll(count: Int, sides: Int, eventCapable: Boolean, excludedFaces: Set<Int>) {
-        if (eventCapable && binding.switchLottery.isChecked) {
+        if (eventCapable && settingsBinding.switchLottery.isChecked) {
             showEventDialog(count, sides, excludedFaces)
         } else {
             commitRoll(count, sides, excludedFaces)
@@ -171,7 +183,7 @@ class MainActivity : ComponentActivity() {
             setPadding(40, 20, 40, 0)
         }
         val inputs = linkedMapOf<Int, com.google.android.material.textfield.TextInputEditText>()
-        vm.available(count, sides, excludedFaces, binding.switchNoRepeat.isChecked).forEach { face ->
+        vm.available(count, sides, excludedFaces, settingsBinding.switchNoRepeat.isChecked).forEach { face ->
             val layout = com.google.android.material.textfield.TextInputLayout(this)
             layout.hint = getString(R.string.event_for_face, face)
             val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
@@ -209,12 +221,79 @@ class MainActivity : ComponentActivity() {
 
     private fun renderRound() {
         val round = vm.round.value
-        binding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
+        settingsBinding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
+        binding.btnRoundDetails.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.tvRound.text = if (round == null) "本轮尚无已掷记录" else {
-            val state = if (round.complete) "本轮已抽完；下次开启新一轮" else if (!binding.switchNoRepeat.isChecked) "已暂停" else "进行中"
-            "${round.dice.count}d${round.dice.sides} · $state\n已掷：${round.drawn.sorted().joinToString(", ")}\n剩余 ${round.remaining} 个面值"
+            val state = if (round.complete) "本轮已抽完；下次开启新一轮" else if (!settingsBinding.switchNoRepeat.isChecked) "已暂停" else "进行中"
+            "${round.dice.count}d${round.dice.sides} · $state\n已抽 ${round.drawn.size} · 剩余 ${round.remaining}"
         }
     }
+
+    private fun renderModes() {
+        val event = if (settingsBinding.switchLottery.isChecked) {
+            if (selectedCount == 1) "事件开" else "事件开（仅单骰）"
+        } else "事件关"
+        val exclusion = if (settingsBinding.switchExclusion.isChecked) "当次排除开" else "当次排除关"
+        val repeat = if (settingsBinding.switchNoRepeat.isChecked) "不重复开" else if (vm.round.value != null) "不重复暂停" else "不重复关"
+        binding.tvModes.text = "$event · $exclusion · $repeat"
+    }
+
+    private fun renderResult(result: RollResult?) {
+        val visible = android.view.View.VISIBLE
+        val gone = android.view.View.GONE
+        binding.resultGrid.removeAllViews()
+        binding.tvEmptyResult.visibility = if (result == null) visible else gone
+        if (result == null) {
+            binding.tvResultDice.text = "上次结果"
+            binding.tvSumLine.visibility = gone
+            binding.tvExcludedLine.visibility = gone
+            return
+        }
+        binding.tvResultDice.text = "上次结果 · ${result.dice.count}d${result.dice.sides}"
+        val paint = android.text.TextPaint().apply {
+            textSize = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, resultTextSize.toFloat(), resources.displayMetrics)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        val longestFace = result.rolls.maxOf { paint.measureText(it.toString()).toInt() }
+        val cellWidth = maxOf(dp(56), longestFace + dp(20))
+        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(48))
+        val columns = (availableWidth / cellWidth).coerceIn(1, minOf(5, result.rolls.size))
+        binding.resultGrid.columnCount = columns
+        // Preserve generation order, including the final row when there are ten dice.
+        result.rolls.forEachIndexed { index, face ->
+            val cell = android.widget.TextView(this).apply {
+                text = face.toString()
+                textSize = resultTextSize.toFloat()
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                gravity = android.view.Gravity.CENTER
+                minHeight = dp(48)
+                setPadding(dp(4), dp(4), dp(4), dp(4))
+                setBackgroundResource(R.drawable.result_face)
+                contentDescription = "第 ${index + 1} 颗骰子，点数 $face"
+            }
+            binding.resultGrid.addView(cell, android.widget.GridLayout.LayoutParams().apply {
+                width = 0
+                height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                rowSpec = android.widget.GridLayout.spec(index / columns)
+                columnSpec = android.widget.GridLayout.spec(index % columns, 1f)
+                setMargins(dp(2), dp(4), dp(2), dp(2))
+            })
+        }
+        binding.tvSumLine.text = result.event ?: "总和：${result.sum}"
+        binding.tvSumLine.visibility = if (result.event != null || result.dice.count > 1) visible else gone
+        binding.tvExcludedLine.text = "本次排除面值：${result.excludedFaces.joinToString(", ")}"
+        binding.tvExcludedLine.visibility = if (result.excludedFaces.isEmpty()) gone else visible
+    }
+
+    private fun showRoundDetails() {
+        val round = vm.round.value ?: return
+        AlertDialog.Builder(this)
+            .setTitle("${round.dice.count}d${round.dice.sides} · 已掷面值")
+            .setMessage("按面值排序（非投掷顺序）\n${round.drawn.sorted().joinToString(", ")}\n\n已抽 ${round.drawn.size} · 剩余 ${round.remaining}")
+            .setPositiveButton("关闭", null).show()
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun guard(action: () -> Unit): Boolean = try {
         action(); true
@@ -225,7 +304,7 @@ class MainActivity : ComponentActivity() {
 
     private fun commitRoll(count: Int, sides: Int, excluded: Set<Int>, events: Map<Int, String> = emptyMap()) {
         val previous = vm.round.value
-        val enabled = binding.switchNoRepeat.isChecked
+        val enabled = settingsBinding.switchNoRepeat.isChecked
         if (guard { vm.roll(count, sides, excluded, events, enabled) }) {
             if (enabled && (previous == null || previous.complete || previous.dice != com.example.dice.model.Dice(count, sides))) {
                 android.widget.Toast.makeText(this, "已开始新一轮", android.widget.Toast.LENGTH_SHORT).show()
@@ -256,12 +335,32 @@ class MainActivity : ComponentActivity() {
                 text = value.toString()
                 contentDescription = if (count) "$value 颗骰子" else "$value 个面"
                 minHeight = (48 * resources.displayMetrics.density).toInt()
+                layoutParams = android.widget.RadioGroup.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
                 setOnClickListener {
                     if (count) selectedCount = value else selectedSides = value
                     renderSelection()
                 }
             }
             group.addView(option)
+        }
+    }
+
+    private fun setupSideOptions() {
+        listOf(2, 3, 4, 6, 10, 12, 20, 100).forEachIndexed { index, value ->
+            val option = android.widget.RadioButton(this).apply {
+                id = android.view.View.generateViewId()
+                tag = value
+                text = value.toString()
+                contentDescription = "$value 个面"
+                minHeight = dp(48)
+                setOnClickListener { selectedSides = value; renderSelection() }
+            }
+            binding.sideOptions.addView(option, android.widget.GridLayout.LayoutParams().apply {
+                width = 0
+                height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                rowSpec = android.widget.GridLayout.spec(index / 4)
+                columnSpec = android.widget.GridLayout.spec(index % 4, 1f)
+            })
         }
     }
 
@@ -274,12 +373,18 @@ class MainActivity : ComponentActivity() {
             }
         }
         check(binding.countOptions, selectedCount)
-        check(binding.sideOptions, selectedSides)
-        binding.btnCustomCount.text = if (selectedCount in listOf(1,2)) "M · 自定义个数" else "M · 已选 $selectedCount 颗"
-        binding.btnCustomSides.text = if (selectedSides in listOf(2,3,4,6,10,12,20,100)) "M · 自定义面数" else "M · 已选 $selectedSides 面"
-        binding.tvSelection.text = "当前骰型：${selectedCount}d$selectedSides"
+        for (index in 0 until binding.sideOptions.childCount) {
+            val option = binding.sideOptions.getChildAt(index) as android.widget.RadioButton
+            option.isChecked = option.tag == selectedSides
+        }
+        binding.btnCustomCount.text = if (selectedCount in listOf(1,2)) "自定义" else "已选 $selectedCount 颗"
+        binding.btnCustomCount.contentDescription = "自定义骰子个数，当前 $selectedCount 颗"
+        binding.btnCustomSides.text = if (selectedSides in listOf(2,3,4,6,10,12,20,100)) "自定义面数" else "自定义 · $selectedSides 面"
+        binding.btnCustomSides.contentDescription = "自定义骰子面数，当前 $selectedSides 面"
+        binding.tvSelection.text = "待投掷：${selectedCount}d$selectedSides"
         binding.btnRoll.text = "投掷 ${selectedCount}d$selectedSides"
-        binding.tvEventHint.text = if (selectedCount == 1) "随机事件支持所有单骰；仅填写本次可抽到的面值。" else "随机事件仅支持单骰；当前多骰按点数投掷。"
+        settingsBinding.tvEventHint.text = if (selectedCount == 1) "随机事件支持所有单骰；仅填写本次可抽到的面值。" else "随机事件仅支持单骰；当前多骰按点数投掷。"
+        renderModes()
         getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
             .putInt("selected_count", selectedCount).putInt("selected_sides", selectedSides).apply()
     }
