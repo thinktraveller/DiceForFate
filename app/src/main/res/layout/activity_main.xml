@@ -32,17 +32,34 @@
    </com.google.android.material.card.MaterialCardView>
    <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-     <TextView android:id="@+id/tvResultDice" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="上次结果" android:textSize="16sp" android:textStyle="bold" android:accessibilityLiveRegion="polite" />
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="上次结果" android:textSize="16sp" android:textStyle="bold" android:accessibilityHeading="true" />
+      <TextView android:id="@+id/tvResultDice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" android:accessibilityLiveRegion="polite" />
+     </LinearLayout>
      <TextView android:id="@+id/tvEmptyResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="选择骰型，投掷你的第一个结果" android:paddingTop="20dp" android:paddingBottom="20dp" android:gravity="center" />
      <GridLayout android:id="@+id/resultGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="3" />
-     <TextView android:id="@+id/tvSumLine" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="24sp" android:textStyle="bold" android:gravity="center" android:paddingTop="4dp" android:visibility="gone" android:textIsSelectable="true" />
+     <View android:id="@+id/sumDivider" android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" android:background="@color/softBorder" android:visibility="gone" android:importantForAccessibility="no" />
+     <LinearLayout android:id="@+id/sumRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+      <TextView android:id="@+id/tvSumLabel" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="总和" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <TextView android:id="@+id/tvSumLine" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/colorPrimary" android:textIsSelectable="true" />
+     </LinearLayout>
      <TextView android:id="@+id/tvExcludedLine" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:visibility="gone" android:textIsSelectable="true" />
     </LinearLayout>
    </com.google.android.material.card.MaterialCardView>
-   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
-    <TextView android:id="@+id/tvRound" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="14sp" android:accessibilityLiveRegion="polite" />
-    <Button android:id="@+id/btnRoundDetails" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:text="查看已掷" />
-   </LinearLayout>
+   <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="不重复抽取" android:textSize="16sp" android:textStyle="bold" android:accessibilityHeading="true" />
+      <TextView android:id="@+id/tvRoundDice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" />
+     </LinearLayout>
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:id="@+id/tvRoundState" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <Button android:id="@+id/btnRoundDetails" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="查看已掷" />
+     </LinearLayout>
+     <TextView android:id="@+id/tvRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:accessibilityLiveRegion="polite" />
+     <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/roundProgress" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:visibility="gone" android:indeterminate="false" app:trackThickness="6dp" app:trackCornerRadius="3dp" app:indicatorColor="@color/colorPrimary" app:trackColor="@color/softIndigo" />
+    </LinearLayout>
+   </com.google.android.material.card.MaterialCardView>
   </LinearLayout>
  </ScrollView>
  <Button android:id="@+id/btnRoll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:layout_marginEnd="20dp" android:layout_marginTop="4dp" android:layout_marginBottom="8dp" android:minHeight="56dp" android:text="投掷" android:textSize="18sp" app:cornerRadius="12dp" />

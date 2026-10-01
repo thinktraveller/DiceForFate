@@ -125,6 +125,7 @@ class MainActivity : ComponentActivity() {
         settingsBinding.tvSumSizeLabel.text = "总和 / 事件字号：${sumSize}sp"
         renderResult(vm.current.value)
         binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, sumSize.toFloat())
+        arrangeFooter(vm.current.value?.event != null)
         settingsBinding.tvFontPreview.textSize = sumSize.toFloat()
         settingsBinding.tvResultFontPreview.textSize = resultSize.toFloat()
 
@@ -146,6 +147,7 @@ class MainActivity : ComponentActivity() {
                 val size = base + progress
                 settingsBinding.tvSumSizeLabel.text = "总和 / 事件字号：${size}sp"
                 binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                arrangeFooter(vm.current.value?.event != null)
                 settingsBinding.tvFontPreview.textSize = size.toFloat()
                 prefs.edit().putInt("sum_text_size_sp", size).apply()
             }
@@ -244,11 +246,21 @@ class MainActivity : ComponentActivity() {
 
     private fun renderRound() {
         val round = vm.round.value
+        val display = MainPresentation.round(round, settingsBinding.switchNoRepeat.isChecked)
         settingsBinding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.btnRoundDetails.isEnabled = round?.drawn?.isNotEmpty() == true
-        binding.tvRound.text = if (round == null) "本轮尚无已掷记录" else {
-            val state = if (round.complete) "本轮已抽完；下次开启新一轮" else if (!settingsBinding.switchNoRepeat.isChecked) "已暂停" else "进行中"
-            "${round.dice.count}d${round.dice.sides} · $state\n已抽 ${round.drawn.size} · 剩余 ${round.remaining}"
+        binding.tvRoundDice.text = display?.diceLabel.orEmpty()
+        binding.tvRoundState.text = display?.state.orEmpty()
+        binding.tvRoundState.visibility = if (display == null) android.view.View.GONE else android.view.View.VISIBLE
+        binding.tvRound.text = if (display == null) "本轮尚无已掷记录" else {
+            "已抽 ${display.drawn} · 剩余 ${display.remaining} · ${display.percent}%"
+        }
+        binding.roundProgress.visibility = if (display == null) android.view.View.GONE else android.view.View.VISIBLE
+        if (display != null) {
+            // Completion can precede 100%, for example 2d5 ends at 4/5.
+            binding.roundProgress.max = display.total
+            binding.roundProgress.progress = display.drawn
+            binding.roundProgress.contentDescription = "${display.diceLabel}，${display.state}，已抽 ${display.drawn}，剩余 ${display.remaining}，进度 ${display.percent}%"
         }
     }
 
@@ -280,23 +292,26 @@ class MainActivity : ComponentActivity() {
         binding.resultGrid.removeAllViews()
         binding.tvEmptyResult.visibility = if (result == null) visible else gone
         if (result == null) {
-            binding.tvResultDice.text = "上次结果"
-            binding.tvSumLine.visibility = gone
+            binding.tvResultDice.text = ""
+            binding.sumRow.visibility = gone
+            binding.sumDivider.visibility = gone
             binding.tvExcludedLine.visibility = gone
             return
         }
-        binding.tvResultDice.text = "上次结果 · ${result.dice.count}d${result.dice.sides}"
+        val display = MainPresentation.result(result)
+        binding.tvResultDice.text = display.diceLabel
+        binding.tvResultDice.contentDescription = "上次结果 ${display.diceLabel}"
         val paint = android.text.TextPaint().apply {
             textSize = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, resultTextSize.toFloat(), resources.displayMetrics)
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-        val longestFace = result.rolls.maxOf { paint.measureText(it.toString()).toInt() }
+        val longestFace = display.faces.maxOf { kotlin.math.ceil(paint.measureText(it.toString()).toDouble()).toInt() }
         val cellWidth = maxOf(dp(56), longestFace + dp(20))
-        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(48))
-        val columns = (availableWidth / cellWidth).coerceIn(1, minOf(5, result.rolls.size))
+        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val columns = MainPresentation.columns(availableWidth, cellWidth, minOf(5, display.faces.size))
         binding.resultGrid.columnCount = columns
         // Preserve generation order, including the final row when there are ten dice.
-        result.rolls.forEachIndexed { index, face ->
+        display.faces.forEachIndexed { index, face ->
             val cell = android.widget.TextView(this).apply {
                 text = face.toString()
                 textSize = resultTextSize.toFloat()
@@ -305,6 +320,7 @@ class MainActivity : ComponentActivity() {
                 minHeight = dp(48)
                 setPadding(dp(4), dp(4), dp(4), dp(4))
                 setBackgroundResource(R.drawable.result_face)
+                setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.textPrimary))
                 contentDescription = "第 ${index + 1} 颗骰子，点数 $face"
             }
             binding.resultGrid.addView(cell, android.widget.GridLayout.LayoutParams().apply {
@@ -315,10 +331,27 @@ class MainActivity : ComponentActivity() {
                 setMargins(dp(2), dp(4), dp(2), dp(2))
             })
         }
-        binding.tvSumLine.text = result.event ?: "总和：${result.sum}"
-        binding.tvSumLine.visibility = if (result.event != null || result.dice.count > 1) visible else gone
-        binding.tvExcludedLine.text = "本次排除面值：${result.excludedFaces.joinToString(", ")}"
-        binding.tvExcludedLine.visibility = if (result.excludedFaces.isEmpty()) gone else visible
+        binding.tvSumLabel.text = display.footerLabel
+        binding.tvSumLine.text = display.footerValue
+        binding.sumRow.visibility = if (display.footerValue == null) gone else visible
+        binding.sumDivider.visibility = binding.sumRow.visibility
+        arrangeFooter(result.event != null)
+        binding.tvExcludedLine.text = display.excludedLabel
+        binding.tvExcludedLine.visibility = if (display.excludedLabel == null) gone else visible
+    }
+
+    private fun arrangeFooter(event: Boolean) {
+        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val vertical = event || binding.tvSumLine.paint.measureText(binding.tvSumLine.text.toString()) +
+            binding.tvSumLabel.paint.measureText(binding.tvSumLabel.text.toString()) + dp(16) > availableWidth
+        binding.sumRow.orientation = if (vertical) android.widget.LinearLayout.VERTICAL else android.widget.LinearLayout.HORIZONTAL
+        binding.tvSumLabel.layoutParams = android.widget.LinearLayout.LayoutParams(
+            if (vertical) android.view.ViewGroup.LayoutParams.MATCH_PARENT else 0,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, if (vertical) 0f else 1f)
+        binding.tvSumLine.layoutParams = android.widget.LinearLayout.LayoutParams(
+            if (vertical) android.view.ViewGroup.LayoutParams.MATCH_PARENT else android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        binding.tvSumLine.gravity = if (vertical) android.view.Gravity.START else android.view.Gravity.END
     }
 
     private fun showRoundDetails() {
@@ -389,7 +422,7 @@ class MainActivity : ComponentActivity() {
         val paint = choiceButton(100).paint
         val cellWidth = maxOf(dp(48), paint.measureText("✓ 100").toInt() + dp(24)) + dp(8)
         val availableWidth = binding.sideOptions.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
-        val columns = (availableWidth / cellWidth).coerceIn(1, 4)
+        val columns = MainPresentation.columns(availableWidth, cellWidth, 4)
         binding.sideOptions.removeAllViews()
         binding.sideOptions.columnCount = columns
         listOf(2, 3, 4, 6, 10, 12, 20, 100).forEachIndexed { index, value ->

@@ -10,8 +10,8 @@
   <item name="colorOnSurface">@color/textPrimary</item>
   <item name="android:textColorPrimary">@color/textPrimary</item>
   <item name="android:textColorSecondary">@color/textSecondary</item>
-  <item name="android:statusBarColor">@color/pageBackground</item>
-  <item name="android:navigationBarColor">@color/pageBackground</item>
+  <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+  <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
  </style>
  <style name="DiceCard">
   <item name="cardCornerRadius">16dp</item>
