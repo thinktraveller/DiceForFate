@@ -26,7 +26,11 @@
       <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="待投掷" android:textSize="14sp" android:textColor="@color/textSecondary" />
       <TextView android:id="@+id/tvSelection" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="18sp" android:textStyle="bold" android:textColor="@color/colorPrimary" android:accessibilityLiveRegion="polite" />
      </LinearLayout>
-     <com.google.android.material.chip.ChipGroup android:id="@+id/modeSummaries" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:chipSpacingHorizontal="8dp" app:chipSpacingVertical="4dp" app:singleLine="false" />
+     <GridLayout android:id="@+id/modeSummaries" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:columnCount="3">
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnLottery" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="事件 开" />
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnExclusion" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="排除 关" />
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnNoRepeat" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="不重复 关" />
+     </GridLayout>
     </LinearLayout>
    </com.google.android.material.card.MaterialCardView>
    <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">

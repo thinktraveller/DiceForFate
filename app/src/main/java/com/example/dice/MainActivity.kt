@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
     private var selectedCount = 1
     private var selectedSides = 6
     private var resultTextSize = 30
+    private var renderedModeColumns = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,12 +81,12 @@ class MainActivity : ComponentActivity() {
 
         val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
         val lotteryEnabled = prefs.getBoolean("lottery_mode_enabled", true)
-        settingsBinding.switchLottery.isChecked = lotteryEnabled
-        settingsBinding.switchLottery.setOnCheckedChangeListener { _, isChecked ->
+        binding.btnLottery.isChecked = lotteryEnabled
+        binding.btnLottery.addOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("lottery_mode_enabled", isChecked).apply()
             renderModes()
         }
-        settingsBinding.switchExclusion.setOnCheckedChangeListener { _, _ -> renderModes() }
+        binding.btnExclusion.addOnCheckedChangeListener { _, _ -> renderModes() }
 
         val savedRound = runCatching {
             val count = prefs.getInt("round_count", 0)
@@ -95,8 +96,8 @@ class MainActivity : ComponentActivity() {
             )
         }.getOrNull()
         vm.restoreRound(savedRound)
-        settingsBinding.switchNoRepeat.isChecked = prefs.getBoolean("no_repeat", false)
-        settingsBinding.switchNoRepeat.setOnCheckedChangeListener { _, checked ->
+        binding.btnNoRepeat.isChecked = prefs.getBoolean("no_repeat", false)
+        binding.btnNoRepeat.addOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("no_repeat", checked).apply()
             renderRound()
             renderModes()
@@ -164,8 +165,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startRoll(count: Int, sides: Int, eventCapable: Boolean = false) {
-        if (!guard { vm.available(count, sides, emptySet(), settingsBinding.switchNoRepeat.isChecked) }) return
-        if (!settingsBinding.switchExclusion.isChecked) {
+        if (!guard { vm.available(count, sides, emptySet(), binding.btnNoRepeat.isChecked) }) return
+        if (!binding.btnExclusion.isChecked) {
             finishRoll(count, sides, eventCapable, emptySet())
             return
         }
@@ -190,7 +191,7 @@ class MainActivity : ComponentActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val excludedFaces = selected.toSet()
-                if (guard { vm.available(count, sides, excludedFaces, settingsBinding.switchNoRepeat.isChecked) }) {
+                if (guard { vm.available(count, sides, excludedFaces, binding.btnNoRepeat.isChecked) }) {
                     dialog.dismiss()
                     finishRoll(count, sides, eventCapable, excludedFaces)
                 }
@@ -201,7 +202,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun finishRoll(count: Int, sides: Int, eventCapable: Boolean, excludedFaces: Set<Int>) {
-        if (eventCapable && settingsBinding.switchLottery.isChecked) {
+        if (eventCapable && binding.btnLottery.isChecked) {
             showEventDialog(count, sides, excludedFaces)
         } else {
             commitRoll(count, sides, excludedFaces)
@@ -214,7 +215,7 @@ class MainActivity : ComponentActivity() {
             setPadding(40, 20, 40, 0)
         }
         val inputs = linkedMapOf<Int, com.google.android.material.textfield.TextInputEditText>()
-        vm.available(count, sides, excludedFaces, settingsBinding.switchNoRepeat.isChecked).forEach { face ->
+        vm.available(count, sides, excludedFaces, binding.btnNoRepeat.isChecked).forEach { face ->
             val layout = com.google.android.material.textfield.TextInputLayout(this)
             layout.hint = getString(R.string.event_for_face, face)
             val edit = com.google.android.material.textfield.TextInputEditText(layout.context)
@@ -253,7 +254,7 @@ class MainActivity : ComponentActivity() {
 
     private fun renderRound() {
         val round = vm.round.value
-        val display = MainPresentation.round(round, settingsBinding.switchNoRepeat.isChecked)
+        val display = MainPresentation.round(round, binding.btnNoRepeat.isChecked)
         settingsBinding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.btnRoundDetails.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.tvRoundDice.text = display?.diceLabel.orEmpty()
@@ -272,24 +273,37 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun renderModes() {
-        val event = if (settingsBinding.switchLottery.isChecked) {
-            if (selectedCount == 1) "事件开" else "事件开（仅单骰）"
-        } else "事件关"
-        val exclusion = if (settingsBinding.switchExclusion.isChecked) "当次排除开" else "当次排除关"
-        val repeat = if (settingsBinding.switchNoRepeat.isChecked) "不重复开" else if (vm.round.value != null) "不重复暂停" else "不重复关"
-        binding.modeSummaries.removeAllViews()
-        listOf(event, exclusion, repeat).forEach { label ->
-            binding.modeSummaries.addView(android.widget.TextView(this).apply {
-                text = label
-                textSize = 12f
-                isClickable = false
-                minHeight = dp(28)
-                maxWidth = binding.modeSummaries.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
-                setPadding(dp(8), dp(4), dp(8), dp(4))
-                setBackgroundResource(R.drawable.mode_tag)
-                setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.textSecondary))
-                contentDescription = label
-            })
+        val modes = listOf(binding.btnLottery, binding.btnExclusion, binding.btnNoRepeat)
+        val names = listOf("事件", "排除", "不重复")
+        modes.forEachIndexed { index, button ->
+            button.text = "${names[index]} ${if (button.isChecked) "开" else "关"}"
+            val hint = when (index) {
+                0 -> if (selectedCount > 1) "，仅单骰生效，当前多骰保留偏好" else ""
+                1 -> "，仅控制本次排除模式，投掷前选择具体面值"
+                else -> if (!button.isChecked && vm.round.value != null) "，本轮已暂停，重新开启继续" else ""
+            }
+            button.contentDescription = "${names[index]}模式，${if (button.isChecked) "已开启" else "已关闭"}$hint"
+        }
+        val cellWidth = modes.maxOf { button ->
+            kotlin.math.ceil(button.paint.measureText(button.text.toString()).toDouble()).toInt() +
+                button.paddingLeft + button.paddingRight + dp(4)
+        }.coerceAtLeast(dp(48) + dp(4))
+        val availableWidth = binding.modeSummaries.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val columns = MainPresentation.columns(availableWidth, cellWidth, 3)
+        // Reuse the same checkable controls and listeners across width changes.
+        if (renderedModeColumns != columns) {
+            if (columns > binding.modeSummaries.columnCount) binding.modeSummaries.columnCount = columns
+            modes.forEachIndexed { index, button ->
+                button.layoutParams = android.widget.GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                    rowSpec = android.widget.GridLayout.spec(index / columns, android.widget.GridLayout.FILL)
+                    columnSpec = android.widget.GridLayout.spec(index % columns, 1f)
+                    setMargins(dp(2), dp(2), dp(2), dp(2))
+                }
+            }
+            binding.modeSummaries.columnCount = columns
+            renderedModeColumns = columns
         }
     }
 
@@ -380,7 +394,7 @@ class MainActivity : ComponentActivity() {
 
     private fun commitRoll(count: Int, sides: Int, excluded: Set<Int>, events: Map<Int, String> = emptyMap()) {
         val previous = vm.round.value
-        val enabled = settingsBinding.switchNoRepeat.isChecked
+        val enabled = binding.btnNoRepeat.isChecked
         if (guard { vm.roll(count, sides, excluded, events, enabled) }) {
             if (enabled && (previous == null || previous.complete || previous.dice != com.example.dice.model.Dice(count, sides))) {
                 android.widget.Toast.makeText(this, "已开始新一轮", android.widget.Toast.LENGTH_SHORT).show()
