@@ -29,6 +29,13 @@ class MainActivity : ComponentActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        val systemBars = androidx.core.view.WindowCompat.getInsetsController(window, binding.root)
+        systemBars.isAppearanceLightStatusBars = android.os.Build.VERSION.SDK_INT >= 23
+        systemBars.isAppearanceLightNavigationBars = android.os.Build.VERSION.SDK_INT >= 26
+        window.statusBarColor = androidx.core.content.ContextCompat.getColor(this,
+            if (android.os.Build.VERSION.SDK_INT >= 23) R.color.pageBackground else R.color.colorPrimaryDark)
+        window.navigationBarColor = androidx.core.content.ContextCompat.getColor(this,
+            if (android.os.Build.VERSION.SDK_INT >= 26) R.color.pageBackground else R.color.colorPrimaryDark)
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars() or androidx.core.view.WindowInsetsCompat.Type.displayCutout())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
@@ -51,6 +58,12 @@ class MainActivity : ComponentActivity() {
         binding.btnRoundDetails.setOnClickListener { showRoundDetails() }
         binding.resultGrid.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
             if (right - left != oldRight - oldLeft) renderResult(vm.current.value)
+        }
+        binding.sideOptions.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) { setupSideOptions(); renderSelection() }
+        }
+        binding.modeSummaries.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) renderModes()
         }
 
         vm.current.observe(this) { r ->
@@ -92,9 +105,9 @@ class MainActivity : ComponentActivity() {
 
         selectedCount = prefs.getInt("selected_count", 1).takeIf { it in 1..10 } ?: 1
         selectedSides = prefs.getInt("selected_sides", 6).takeIf { it in 2..100 } ?: 6
-        setupOptions(binding.countOptions, listOf(1, 2), true)
+        setupCountOptions()
         setupSideOptions()
-        binding.btnCustomCount.setOnClickListener { showNumberDialog(true) }
+        binding.btnCustomCount.setOnClickListener { renderSelection(); showNumberDialog(true) }
         binding.btnCustomSides.setOnClickListener { showNumberDialog(false) }
         binding.btnRoll.setOnClickListener { vibrate(); startRoll(selectedCount, selectedSides, selectedCount == 1) }
         renderSelection()
@@ -245,7 +258,20 @@ class MainActivity : ComponentActivity() {
         } else "事件关"
         val exclusion = if (settingsBinding.switchExclusion.isChecked) "当次排除开" else "当次排除关"
         val repeat = if (settingsBinding.switchNoRepeat.isChecked) "不重复开" else if (vm.round.value != null) "不重复暂停" else "不重复关"
-        binding.tvModes.text = "$event · $exclusion · $repeat"
+        binding.modeSummaries.removeAllViews()
+        listOf(event, exclusion, repeat).forEach { label ->
+            binding.modeSummaries.addView(android.widget.TextView(this).apply {
+                text = label
+                textSize = 12f
+                isClickable = false
+                minHeight = dp(28)
+                maxWidth = binding.modeSummaries.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+                setPadding(dp(8), dp(4), dp(8), dp(4))
+                setBackgroundResource(R.drawable.mode_tag)
+                setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.textSecondary))
+                contentDescription = label
+            })
+        }
     }
 
     private fun renderResult(result: RollResult?) {
@@ -337,61 +363,70 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun setupOptions(group: android.widget.RadioGroup, values: List<Int>, count: Boolean) {
-        values.forEach { value ->
-            val option = android.widget.RadioButton(this).apply {
-                id = android.view.View.generateViewId()
-                tag = value
-                text = value.toString()
-                contentDescription = if (count) "$value 颗骰子" else "$value 个面"
-                minHeight = (48 * resources.displayMetrics.density).toInt()
-                layoutParams = android.widget.RadioGroup.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                setOnClickListener {
-                    if (count) selectedCount = value else selectedSides = value
-                    renderSelection()
-                }
+    private fun choiceButton(value: Int) = com.google.android.material.button.MaterialButton(
+        android.view.ContextThemeWrapper(this, R.style.DiceChoice), null, 0
+    ).apply {
+        id = android.view.View.generateViewId()
+        tag = value
+        isCheckable = true
+        minHeight = dp(48)
+    }
+
+    private fun setupCountOptions() {
+        listOf(1, 2).forEachIndexed { index, value ->
+            val option = choiceButton(value).apply {
+                backgroundTintList = androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_background)
+                setTextColor(androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_text))
+                setOnClickListener { selectedCount = value; renderSelection() }
             }
-            group.addView(option)
+            binding.countOptions.addView(option, index, android.widget.LinearLayout.LayoutParams(
+                0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 1f
+            ).apply { setMargins(if (index == 0) 0 else dp(4), 0, dp(4), 0) })
         }
     }
 
     private fun setupSideOptions() {
+        val paint = choiceButton(100).paint
+        val cellWidth = maxOf(dp(48), paint.measureText("✓ 100").toInt() + dp(24)) + dp(8)
+        val availableWidth = binding.sideOptions.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val columns = (availableWidth / cellWidth).coerceIn(1, 4)
+        binding.sideOptions.removeAllViews()
+        binding.sideOptions.columnCount = columns
         listOf(2, 3, 4, 6, 10, 12, 20, 100).forEachIndexed { index, value ->
-            val option = android.widget.RadioButton(this).apply {
-                id = android.view.View.generateViewId()
-                tag = value
-                text = value.toString()
-                contentDescription = "$value 个面"
-                minHeight = dp(48)
+            val option = choiceButton(value).apply {
                 setOnClickListener { selectedSides = value; renderSelection() }
             }
             binding.sideOptions.addView(option, android.widget.GridLayout.LayoutParams().apply {
                 width = 0
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                rowSpec = android.widget.GridLayout.spec(index / 4)
-                columnSpec = android.widget.GridLayout.spec(index % 4, 1f)
+                rowSpec = android.widget.GridLayout.spec(index / columns, android.widget.GridLayout.FILL)
+                columnSpec = android.widget.GridLayout.spec(index % columns, 1f)
+                setMargins(dp(4), dp(4), dp(4), dp(4))
             })
         }
     }
 
     private fun renderSelection() {
-        fun check(group: android.widget.RadioGroup, value: Int) {
-            group.clearCheck()
-            for (index in 0 until group.childCount) {
-                val option = group.getChildAt(index) as android.widget.RadioButton
-                if (option.tag == value) group.check(option.id)
-            }
+        for (index in 0 until binding.countOptions.childCount) {
+            val option = binding.countOptions.getChildAt(index) as com.google.android.material.button.MaterialButton
+            val custom = option == binding.btnCustomCount
+            val value = if (custom) selectedCount else option.tag as Int
+            val checked = if (custom) selectedCount !in listOf(1, 2) else selectedCount == value
+            option.isChecked = checked
+            option.text = if (custom && !checked) "自定义" else "${if (checked) "✓ " else ""}$value 颗"
+            option.contentDescription = "${if (custom) "自定义骰子数量，当前" else "骰子数量"} $value 颗，${if (checked) "已选中" else "未选中"}"
         }
-        check(binding.countOptions, selectedCount)
         for (index in 0 until binding.sideOptions.childCount) {
-            val option = binding.sideOptions.getChildAt(index) as android.widget.RadioButton
+            val option = binding.sideOptions.getChildAt(index) as com.google.android.material.button.MaterialButton
             option.isChecked = option.tag == selectedSides
+            option.text = "${if (option.isChecked) "✓ " else ""}${option.tag}"
+            option.contentDescription = "${option.tag} 个面，${if (option.isChecked) "已选中" else "未选中"}"
         }
-        binding.btnCustomCount.text = if (selectedCount in listOf(1,2)) "自定义" else "已选 $selectedCount 颗"
-        binding.btnCustomCount.contentDescription = "自定义骰子个数，当前 $selectedCount 颗"
+        binding.tvCountSummary.text = "已选 $selectedCount 颗"
         binding.btnCustomSides.text = if (selectedSides in listOf(2,3,4,6,10,12,20,100)) "自定义面数" else "自定义 · $selectedSides 面"
         binding.btnCustomSides.contentDescription = "自定义骰子面数，当前 $selectedSides 面"
-        binding.tvSelection.text = "待投掷：${selectedCount}d$selectedSides"
+        binding.tvSelection.text = "${selectedCount}d$selectedSides"
+        binding.tvSelection.contentDescription = "待投掷 ${selectedCount}d$selectedSides"
         binding.btnRoll.text = "投掷 ${selectedCount}d$selectedSides"
         settingsBinding.tvEventHint.text = if (selectedCount == 1) "随机事件支持所有单骰；仅填写本次可抽到的面值。" else "随机事件仅支持单骰；当前多骰按点数投掷。"
         renderModes()
