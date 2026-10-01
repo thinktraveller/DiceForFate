@@ -57,13 +57,20 @@ class MainActivity : ComponentActivity() {
         settingsBinding.btnClose.setOnClickListener { settingsDialog.dismiss() }
         binding.btnRoundDetails.setOnClickListener { showRoundDetails() }
         binding.resultGrid.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right - left != oldRight - oldLeft) renderResult(vm.current.value)
+            if (right - left != oldRight - oldLeft) binding.resultGrid.post {
+                if (!isDestroyed) renderResult(vm.current.value)
+            }
         }
         binding.sideOptions.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right - left != oldRight - oldLeft) { setupSideOptions(); renderSelection() }
+            // Replacing children during View.layout leaves them outside its completed pass.
+            if (right - left != oldRight - oldLeft) binding.sideOptions.post {
+                if (!isDestroyed) { setupSideOptions(); renderSelection() }
+            }
         }
         binding.modeSummaries.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right - left != oldRight - oldLeft) renderModes()
+            if (right - left != oldRight - oldLeft) binding.modeSummaries.post {
+                if (!isDestroyed) renderModes()
+            }
         }
 
         vm.current.observe(this) { r ->
@@ -423,6 +430,7 @@ class MainActivity : ComponentActivity() {
         val cellWidth = maxOf(dp(48), paint.measureText("✓ 100").toInt() + dp(24)) + dp(8)
         val availableWidth = binding.sideOptions.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
         val columns = MainPresentation.columns(availableWidth, cellWidth, 4)
+        if (binding.sideOptions.childCount == 8 && binding.sideOptions.columnCount == columns) return
         binding.sideOptions.removeAllViews()
         binding.sideOptions.columnCount = columns
         listOf(2, 3, 4, 6, 10, 12, 20, 100).forEachIndexed { index, value ->
