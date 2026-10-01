@@ -57,8 +57,8 @@ class MainActivity : ComponentActivity() {
         }
         settingsBinding.btnClose.setOnClickListener { settingsDialog.dismiss() }
         binding.btnRoundDetails.setOnClickListener { showRoundDetails() }
-        binding.resultGrid.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right - left != oldRight - oldLeft) binding.resultGrid.post {
+        binding.resultContent.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) binding.resultContent.post {
                 if (!isDestroyed) renderResult(vm.current.value)
             }
         }
@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                 val size = base + progress
                 settingsBinding.tvSumSizeLabel.text = "总和 / 事件字号：${size}sp"
                 binding.tvSumLine.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
-                arrangeFooter(vm.current.value?.event != null)
+                renderResult(vm.current.value)
                 settingsBinding.tvFontPreview.textSize = size.toFloat()
                 prefs.edit().putInt("sum_text_size_sp", size).apply()
             }
@@ -310,11 +310,14 @@ class MainActivity : ComponentActivity() {
         val gone = android.view.View.GONE
         binding.resultGrid.removeAllViews()
         binding.tvEmptyResult.visibility = if (result == null) visible else gone
+        binding.resultContent.visibility = if (result == null) gone else visible
         if (result == null) {
             binding.tvResultDice.text = ""
             binding.sumRow.visibility = gone
             binding.sumDivider.visibility = gone
             binding.tvExcludedLine.visibility = gone
+            binding.tvSumLine.text = ""
+            binding.tvSumLabel.text = ""
             return
         }
         val display = MainPresentation.result(result)
@@ -326,7 +329,21 @@ class MainActivity : ComponentActivity() {
         }
         val longestFace = display.faces.maxOf { kotlin.math.ceil(paint.measureText(it.toString()).toDouble()).toInt() }
         val cellWidth = maxOf(dp(56), longestFace + dp(20))
-        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        // Use the full content width, never the previous event's narrow dice column.
+        val availableWidth = binding.resultContent.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val event = result.event != null && result.dice.count == 1
+        val faceWidth = cellWidth + dp(4)
+        val eventMinWidth = maxOf(binding.tvSumLabel.paint.measureText("事件"), binding.tvSumLine.paint.measureText("事"))
+        val inlineEvent = event && faceWidth + dp(12) + eventMinWidth <= availableWidth
+        binding.resultContent.orientation = if (inlineEvent) android.widget.LinearLayout.HORIZONTAL else android.widget.LinearLayout.VERTICAL
+        binding.resultGrid.layoutParams = android.widget.LinearLayout.LayoutParams(
+            if (inlineEvent) faceWidth else android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        binding.sumRow.layoutParams = android.widget.LinearLayout.LayoutParams(
+            if (inlineEvent) 0 else android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, if (inlineEvent) 1f else 0f).apply {
+            marginStart = if (inlineEvent) dp(12) else 0
+        }
         val columns = MainPresentation.columns(availableWidth, cellWidth, minOf(5, display.faces.size))
         binding.resultGrid.columnCount = columns
         // Preserve generation order, including the final row when there are ten dice.
@@ -353,14 +370,14 @@ class MainActivity : ComponentActivity() {
         binding.tvSumLabel.text = display.footerLabel
         binding.tvSumLine.text = display.footerValue
         binding.sumRow.visibility = if (display.footerValue == null) gone else visible
-        binding.sumDivider.visibility = binding.sumRow.visibility
-        arrangeFooter(result.event != null)
+        binding.sumDivider.visibility = if (event) gone else binding.sumRow.visibility
+        arrangeFooter(event)
         binding.tvExcludedLine.text = display.excludedLabel
         binding.tvExcludedLine.visibility = if (display.excludedLabel == null) gone else visible
     }
 
     private fun arrangeFooter(event: Boolean) {
-        val availableWidth = binding.resultGrid.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
+        val availableWidth = binding.resultContent.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
         val vertical = event || binding.tvSumLine.paint.measureText(binding.tvSumLine.text.toString()) +
             binding.tvSumLabel.paint.measureText(binding.tvSumLabel.text.toString()) + dp(16) > availableWidth
         binding.sumRow.orientation = if (vertical) android.widget.LinearLayout.VERTICAL else android.widget.LinearLayout.HORIZONTAL

@@ -40,11 +40,13 @@
       <TextView android:id="@+id/tvResultDice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" android:accessibilityLiveRegion="polite" />
      </LinearLayout>
      <TextView android:id="@+id/tvEmptyResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="选择骰型，投掷你的第一个结果" android:paddingTop="20dp" android:paddingBottom="20dp" android:gravity="center" />
+     <LinearLayout android:id="@+id/resultContent" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="top" android:baselineAligned="false">
      <GridLayout android:id="@+id/resultGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="3" />
      <View android:id="@+id/sumDivider" android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" android:background="@color/softBorder" android:visibility="gone" android:importantForAccessibility="no" />
      <LinearLayout android:id="@+id/sumRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
       <TextView android:id="@+id/tvSumLabel" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="总和" android:textSize="14sp" android:textColor="@color/textSecondary" />
       <TextView android:id="@+id/tvSumLine" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/colorPrimary" android:textIsSelectable="true" />
+     </LinearLayout>
      </LinearLayout>
      <TextView android:id="@+id/tvExcludedLine" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:visibility="gone" android:textIsSelectable="true" />
     </LinearLayout>
