@@ -2,6 +2,15 @@
 
 离线 Android 掷骰应用，使用本机 SecureRandom，支持普通掷骰、随机事件、当次面值排除和不重复抽取。
 
+## 安装包下载
+
+当前发布版本为 **1.7.0**（Android `versionCode=2`，最低 Android 5.0 / API 21）。
+
+- [下载 DiceForFate-v1.7.0-debug.apk](https://github.com/thinktraveller/DiceForFate/releases/download/v1.7.0/DiceForFate-v1.7.0-debug.apk)
+- [发布说明与 SHA-256 校验文件](https://github.com/thinktraveller/DiceForFate/releases/tag/v1.7.0)
+
+本包使用与旧版相同的 Android Debug 签名，可覆盖安装同签名旧版；下载后在 Android 中打开 APK 安装。它是 Debug 构建，尚未配置正式发行签名。版本包含本轮不重复抽取、紧凑主页和点数/事件并列布局；构建与自动测试通过，首屏、大字号和长内容的真机验收状态见下文。
+
 ## 选择与投掷
 
 数量快捷只保留两个等宽等高控件 `1 颗 / 2 颗`，自定义数量位于标题行右侧，3–10 颗时入口显示实际数量；面数自定义也位于对应标题右侧。八种面数按 `2 / 3 / 4 / 6`、`10 / 12 / 20 / 100` 两行四列布局，数量与面数共用浅靛蓝选中底、靛蓝文字和勾选标记。普通窗口目标为四列，系统极大字体或极窄窗口按真实字体测宽减少列数以保持完整可读。
