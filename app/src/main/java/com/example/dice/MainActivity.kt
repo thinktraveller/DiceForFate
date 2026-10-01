@@ -409,7 +409,17 @@ class MainActivity : ComponentActivity() {
         id = android.view.View.generateViewId()
         tag = value
         isCheckable = true
+        minWidth = 0
         minHeight = dp(48)
+        insetTop = 0
+        insetBottom = 0
+        cornerRadius = dp(12)
+        strokeWidth = dp(1)
+        strokeColor = androidx.core.content.ContextCompat.getColorStateList(context, R.color.softBorder)
+        backgroundTintList = androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_background)
+        setTextColor(androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_text))
+        textSize = 14f
+        setPadding(dp(8), 0, dp(8), 0)
     }
 
     private fun setupCountOptions() {
@@ -421,13 +431,14 @@ class MainActivity : ComponentActivity() {
             }
             binding.countOptions.addView(option, index, android.widget.LinearLayout.LayoutParams(
                 0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 1f
-            ).apply { setMargins(if (index == 0) 0 else dp(4), 0, dp(4), 0) })
+            ).apply { setMargins(if (index == 0) 0 else dp(4), 0, if (index == 0) dp(4) else 0, 0) })
         }
     }
 
     private fun setupSideOptions() {
         val paint = choiceButton(100).paint
-        val cellWidth = maxOf(dp(48), paint.measureText("✓ 100").toInt() + dp(24)) + dp(8)
+        // Use the actual 8dp padding on each side; the old estimate forced a third row.
+        val cellWidth = maxOf(dp(48), kotlin.math.ceil(paint.measureText("✓ 100").toDouble()).toInt() + dp(16)) + dp(8)
         val availableWidth = binding.sideOptions.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
         val columns = MainPresentation.columns(availableWidth, cellWidth, 4)
         if (binding.sideOptions.childCount == 8 && binding.sideOptions.columnCount == columns) return
@@ -450,12 +461,11 @@ class MainActivity : ComponentActivity() {
     private fun renderSelection() {
         for (index in 0 until binding.countOptions.childCount) {
             val option = binding.countOptions.getChildAt(index) as com.google.android.material.button.MaterialButton
-            val custom = option == binding.btnCustomCount
-            val value = if (custom) selectedCount else option.tag as Int
-            val checked = if (custom) selectedCount !in listOf(1, 2) else selectedCount == value
+            val value = option.tag as Int
+            val checked = selectedCount == value
             option.isChecked = checked
-            option.text = if (custom && !checked) "自定义" else "${if (checked) "✓ " else ""}$value 颗"
-            option.contentDescription = "${if (custom) "自定义骰子数量，当前" else "骰子数量"} $value 颗，${if (checked) "已选中" else "未选中"}"
+            option.text = "${if (checked) "✓ " else ""}$value 颗"
+            option.contentDescription = "骰子数量 $value 颗，${if (checked) "已选中" else "未选中"}"
         }
         for (index in 0 until binding.sideOptions.childCount) {
             val option = binding.sideOptions.getChildAt(index) as com.google.android.material.button.MaterialButton
@@ -463,7 +473,8 @@ class MainActivity : ComponentActivity() {
             option.text = "${if (option.isChecked) "✓ " else ""}${option.tag}"
             option.contentDescription = "${option.tag} 个面，${if (option.isChecked) "已选中" else "未选中"}"
         }
-        binding.tvCountSummary.text = "已选 $selectedCount 颗"
+        binding.btnCustomCount.text = if (selectedCount in 1..2) "自定义数量" else "自定义 · $selectedCount 颗"
+        binding.btnCustomCount.contentDescription = "自定义骰子数量，当前 $selectedCount 颗"
         binding.btnCustomSides.text = if (selectedSides in listOf(2,3,4,6,10,12,20,100)) "自定义面数" else "自定义 · $selectedSides 面"
         binding.btnCustomSides.contentDescription = "自定义骰子面数，当前 $selectedSides 面"
         binding.tvSelection.text = "${selectedCount}d$selectedSides"

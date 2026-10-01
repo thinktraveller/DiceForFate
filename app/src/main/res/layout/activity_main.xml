@@ -12,10 +12,9 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
       <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="骰子数量" android:textSize="16sp" android:textStyle="bold" />
-      <TextView android:id="@+id/tvCountSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <Button android:id="@+id/btnCustomCount" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:minWidth="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="自定义数量" />
      </LinearLayout>
      <LinearLayout android:id="@+id/countOptions" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:baselineAligned="false">
-      <com.google.android.material.button.MaterialButton android:id="@+id/btnCustomCount" style="@style/DiceChoice" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:layout_marginStart="4dp" android:text="自定义" android:checkable="true" app:backgroundTint="@color/count_background" android:textColor="@color/count_text" />
      </LinearLayout>
      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
       <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="骰子面数" android:textSize="16sp" android:textStyle="bold" />
