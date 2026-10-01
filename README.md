@@ -4,12 +4,13 @@
 
 ## 选择与投掷
 
-个数横向选择 `1 / 2 / 自定义`，八种面数 `2 / 3 / 4 / 6 / 10 / 12 / 20 / 100` 分两行选择，并有独立自定义面数入口。
+数量使用三个等宽等高控件 `1 颗 / 2 颗 / 自定义`，自定义选中后显示实际数量；八种面数 `2 / 3 / 4 / 6 / 10 / 12 / 20 / 100` 在常规窗口分四列两行，窄屏或系统大字体时按实际字体宽度减少列数，并有独立自定义面数入口。
 自定义个数范围为 1–10、面数为 2–100。选择组合后点击底部“投掷”；选值、取消输入不会掷骰或推进本轮。
 首次默认 `1d6`，以后记住上次有效选择。顶栏打开历史或底部设置面板；三个模式、清除已掷和字号调节均在设置内。
 
-主结果卡显示上次成功结果自己的骰型，点数按生成顺序分块、随可用宽度和字号换行，保留全部 1–10 颗结果、总和、完整事件和本次排除说明。改选不会给旧结果或旧轮重新贴标签。底部投掷按钮与可滚动内容分开，预留系统导航和刘海区域。
-轮次摘要显示它自己的骰型、状态、已抽/剩余数量；“查看已掷”显示完整面值集合（按面值排序，不表示投掷顺序）。
+浅灰背景上的配置、结果、轮次白卡使用统一边距与靛蓝选中态；勾选与可朗读状态同步真实选值，模式摘要可换行。
+主结果卡分开显示标题和上次成功结果自己的骰型，点数按生成顺序分块、随可用宽度和字号换行，保留全部 1–10 颗结果（包括重复点数）、总和、完整事件和本次排除说明。总和独立分区，长事件和超宽总和改为纵向排列。改选不会给旧结果或旧轮重新贴标签。底部投掷按钮与可滚动内容分开，预留系统导航和刘海区域。
+轮次独立卡显示它自己的骰型、状态、已抽/剩余数量及真实进度条；进度是已抽面值数量 / 该轮总面数，例如 `2d5` 抽四面后结束，仍显示 80%。无轮次时不显示虚构进度。“查看已掷”显示完整面值集合（按面值排序，不表示投掷顺序）。
 
 设置中的“结果字号”只控制点数块，“总和 / 事件字号”只控制总和或事件文字；两者仍为 18–40sp，默认分别 30sp、24sp，并提供即时预览和持久化。长结果、长事件、小屏和大字体允许滚动。
 
@@ -35,10 +36,20 @@
 
 成功后 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。`dist/` 和 `archive/` 中已有版本属于旧构建，不含本轮功能。
 
-2026-09-30 紧凑 UI 的 Android Debug 构建通过。原 4 个 Gradle 单元测试和 `_verify/` 临时新增的 5 个真实核心/ViewModel 契约测试均通过；临时源码验证后删除。APK 的 v1/v2 签名验证通过。新 APK 在上述 app/build 路径；dist/archive 中的旧 APK 未更新。当前未连接 Android 设备，首屏、设置交互与设备端到端验收待完成。
+2026-10-01 均衡卡片 UI 的 Android Debug 构建通过。原 4 个 Gradle 单元测试和本轮 `_verify/` 临时新增的 7 个真实核心/ViewModel/展示映射契约测试共 11 项全部通过；临时源码验证后删除。验证包括 `10d100` 的 `70,83,13,18,8,16,80,74,70,95`（总和 527、保留重复 70）、暂停轮次 60/100、旧 `9d100/361`、真实 2d5 的 80% 结束状态及三模式组合；这些证明展示数据映射和业务契约，不是 Android 实际排版测量或截图证据。
+新 APK 在上述 app/build 路径；dist/archive 中的旧 APK 未更新。当前 adb 无设备，SDK 无模拟器及系统镜像；原反馈真机和模拟器的首屏、同设备前后截图、设置/字号/键盘/导航/TalkBack 与真实进程重启验收仍待完成。没有设置发行默认样例或修改随机逻辑。
 
-本次隔离实施位于 `C:/Users/joyjo/.codex/worktrees/9114/DiceForFate`。复用 SDK `D:/Demo/DiceForFate/android-sdk`，由被 Git 忽略的 `local.properties` 指定；Gradle 复用 `D:/Demo/DiceForFate/_verify/gradle-home` 隔离缓存避开原用户缓存损坏。
-真实文档库是 `D:/Demo/DiceForFate/project-docs`，本次构建日志及完整设备待验收清单在其中的 `buildlog.md`，镜像安装说明在其中的 `docs/mirror-install-and-build.md`。当前 worktree 的 `project-docs` 副本仅作参考，未更新本次日志。
+本次隔离实施位于 `C:/Users/joyjo/.codex/worktrees/92ee/DiceForFate`，分支 `codex/build-steps-13-16`，基于完整步骤 9–12 的 `a19b76f`。复用 SDK `D:/Demo/DiceForFate/android-sdk`，由被 Git 忽略的 `local.properties` 指定；Gradle 复用 `D:/Demo/DiceForFate/_verify/gradle-home` 隔离缓存避开原用户缓存损坏。
+真实文档库是 `D:/Demo/DiceForFate/project-docs`，本次构建日志及完整设备待验收清单在其中的 `buildlog.md`，镜像安装说明在其中的 `docs/mirror-install-and-build.md`。本次 worktree 不复制独立文档库。
+
+若 Wrapper 尝试重新下载分发版而超时，可直接复用本机已有 Gradle 8.1.1（不用安装工具）：
+
+```powershell
+$gradleExecutable = Get-ChildItem "$env:USERPROFILE/.gradle/wrapper/dists/gradle-8.1.1-bin" -Recurse -Filter gradle.bat | Select-Object -First 1 -ExpandProperty FullName
+& $gradleExecutable -g D:/Demo/DiceForFate/_verify/gradle-home testDebugUnitTest assembleDebug --offline --no-daemon
+```
+
+成功标志为 `BUILD SUCCESSFUL`；异常时检查现有分发版路径、JDK 17、SDK Platform 34 和隔离缓存。此本机复现命令不适用于尚未具备这些工具的开发机。
 
 ## 设备待验收清单
 
@@ -50,6 +61,8 @@
 4. 验证三开关全部组合，事件只在单骰生效、与实际点数匹配，历史保留本次排除项；多骰不关闭事件偏好。暂停/恢复、成功换骰、清历史/清轮次独立，真实杀进程重开恢复轮次。
 5. 设置结果 33sp、总和/事件 30sp，预览和实际对应对象更新；关闭/返回/重开面板及应用后保留。面板滚动可达，关闭后焦点回到设置入口，不误投掷或清轮次。
 6. 检查 40sp、系统大字体、窄屏/横屏、长事件/长排除文本、手势/三键导航：完整内容、输入错误、键盘确认/取消和主按钮均可到达，无遮挡裁切。TalkBack 可辨选中态、控件名称和投掷结果。
+7. 本轮主对照状态为 `10d100/527`、设置收起、事件关、当次排除关、不重复暂停、旧轮已抽 60/剩余 40/进度 60%；数据夹具只用于验收。记录源码提交/APK、Android 版本、逻辑窗口 dp、系统字体比例、应用 30sp/24sp、导航及键盘状态，再做同设备前后截图。核对三数量控件等宽等高、面数顺序、十点顺序完整、卡片/按钮对齐与首屏实测；原反馈机不可用时不能把自动测试标作手机 UI 验收。
+8. 在 `2d5` 本轮结束、改选但未投掷、暂停/恢复、清轮次、成功换型及重启后核对卡片计数/条形同步。`2d5` 已抽 4/剩余 1 的进度为 80%，不能为了“已抽完”补满进度。空结果和空轮次不出现样例数据。
 
 ## 源码结构
 
@@ -57,6 +70,7 @@
 - `DrawRound.kt`：轮次快照、候选计算、前置校验与成功提交。
 - `MainViewModel.kt`：整合当前结果、轮次和会话历史。
 - `MainActivity.kt`：紧凑选择器、动态结果块、底部设置与输入、本地轮次保存。
+- `MainPresentation.kt`：主屏实际使用的结果/轮次展示映射与按宽度选列数，不控制采样或持久化。
 - `HistoryStore.kt`、`HistoryActivity.kt`：会话历史及独立清空。
 - `model/`、`ResultFormatter.kt`、`ui/ResultAdapter.kt`：结果模型、文本格式化与历史展示。
 - `app/src/main/res/layout/activity_main.xml`：可滚动主界面、结果卡与独立底部投掷。
