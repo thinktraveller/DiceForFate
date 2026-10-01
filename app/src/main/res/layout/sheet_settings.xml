@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:fillViewport="true">
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="模式与显示设置" android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true" />
-  <TextView android:id="@+id/tvEventHint" android:layout_width="match_parent" android:layout_height="wrap_content" />
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="每次投掷前选择排除面值；仅对本次生效。不重复模式下候选不足时，可调整排除项。" />
-  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="关闭开关暂停本轮，重新开启继续；重启保留进度。抽完后下次成功投掷开启新一轮。成功投掷另一骰型结束旧轮。多骰须个数小于面数。" />
-  <Button android:id="@+id/btnClearRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="清除已掷记录（保留历史）" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="字号与模式说明" android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true" />
   <TextView android:id="@+id/tvResultSizeLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="结果字号" android:textSize="16sp" android:layout_marginTop="8dp" />
   <SeekBar android:id="@+id/sbResultSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:max="22" android:contentDescription="结果字号，18至40sp" />
   <TextView android:id="@+id/tvResultFontPreview" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="点数预览" android:gravity="center" android:paddingTop="8dp" android:paddingBottom="8dp" />
   <TextView android:id="@+id/tvSumSizeLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="总和 / 事件字号" android:textSize="16sp" />
   <SeekBar android:id="@+id/sbSumSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:max="22" android:contentDescription="总和或事件字号，18至40sp" />
   <TextView android:id="@+id/tvFontPreview" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="总和 / 事件预览" android:gravity="center" android:paddingTop="8dp" android:paddingBottom="8dp" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="事件" android:textSize="16sp" android:textStyle="bold" android:layout_marginTop="16dp" android:accessibilityHeading="true" />
+  <TextView android:id="@+id/tvEventHint" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="单次排除" android:textSize="16sp" android:textStyle="bold" android:layout_marginTop="12dp" android:accessibilityHeading="true" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="每次投掷前选择排除面值；只对本次成功投掷生效，下一次重新选择。不重复模式下候选不足时，可调整排除项。" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="不重复" android:textSize="16sp" android:textStyle="bold" android:layout_marginTop="12dp" android:accessibilityHeading="true" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="按面值追踪，同次和跨次都不重复；多骰须个数小于面数。关闭开关暂停本轮，重新开启继续；重启保留进度。单骰抽完全部面值，或多骰剩余面值少于个数时结束；下次成功投掷开启新一轮。成功投掷另一骰型结束旧轮。可在“查看已掷”中手动清除本轮，历史保留。" />
   <Button android:id="@+id/btnClose" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="完成" />
  </LinearLayout>
 </ScrollView>

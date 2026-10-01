@@ -102,7 +102,6 @@ class MainActivity : ComponentActivity() {
             renderRound()
             renderModes()
         }
-        settingsBinding.btnClearRound.setOnClickListener { vm.clearRound() }
         vm.round.observe(this) { round ->
             prefs.edit().putInt("round_count", round?.dice?.count ?: 0)
                 .putInt("round_sides", round?.dice?.sides ?: 0)
@@ -255,7 +254,6 @@ class MainActivity : ComponentActivity() {
     private fun renderRound() {
         val round = vm.round.value
         val display = MainPresentation.round(round, binding.btnNoRepeat.isChecked)
-        settingsBinding.btnClearRound.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.btnRoundDetails.isEnabled = round?.drawn?.isNotEmpty() == true
         binding.tvRoundDice.text = display?.diceLabel.orEmpty()
         binding.tvRoundState.text = display?.state.orEmpty()
@@ -379,7 +377,8 @@ class MainActivity : ComponentActivity() {
         val round = vm.round.value ?: return
         AlertDialog.Builder(this)
             .setTitle("${round.dice.count}d${round.dice.sides} · 已掷面值")
-            .setMessage("按面值排序（非投掷顺序）\n${round.drawn.sorted().joinToString(", ")}\n\n已抽 ${round.drawn.size} · 剩余 ${round.remaining}")
+            .setMessage("按面值排序（非投掷顺序）\n${round.drawn.sorted().joinToString(", ")}\n\n已抽 ${round.drawn.size} · 剩余 ${round.remaining}\n\n清除已掷只重置本轮，保留历史记录。")
+            .setNeutralButton("清除已掷") { _, _ -> vm.clearRound() }
             .setPositiveButton("关闭", null).show()
     }
 
