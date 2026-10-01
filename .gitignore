@@ -1,9 +1,16 @@
 .gradle/
 app/build/
 android-sdk/
+local.properties
 tools/
 dist/checksums.txt
 archive/*.zip
 .idea/
 *.iml
 *.zip
+
+# --- project-initializer (managed) ---
+_verify/
+reference-projects/
+project-docs/
+# --- /project-initializer (managed) ---

@@ -1,143 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="12dp">
-
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Dice for Fate"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:paddingBottom="8dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingBottom="8dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/lottery_mode_label"
-            android:textSize="16sp"
-            android:paddingRight="12dp" />
-
-        <Switch
-            android:id="@+id/switchLottery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/pageBackground">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingTop="8dp" android:paddingBottom="8dp">
+  <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Dice for Fate" android:textSize="20sp" android:textStyle="bold" android:accessibilityHeading="true" />
+  <Button android:id="@+id/btnHistory" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="历史" android:contentDescription="打开历史记录" />
+  <Button android:id="@+id/btnSettings" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="设置" android:contentDescription="打开字号与模式说明" />
+ </LinearLayout>
+ <ScrollView android:id="@+id/mainScroll" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true" android:clipToPadding="false">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingBottom="12dp">
+   <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="骰子数量" android:textSize="16sp" android:textStyle="bold" />
+      <Button android:id="@+id/btnCustomCount" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:minWidth="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="自定义数量" />
+     </LinearLayout>
+     <LinearLayout android:id="@+id/countOptions" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:baselineAligned="false">
+     </LinearLayout>
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="骰子面数" android:textSize="16sp" android:textStyle="bold" />
+      <Button android:id="@+id/btnCustomSides" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:minWidth="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="自定义面数" />
+     </LinearLayout>
+     <GridLayout android:id="@+id/sideOptions" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="4" />
+     <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:layout_marginBottom="12dp" android:background="@color/softBorder" android:importantForAccessibility="no" />
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="待投掷" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <TextView android:id="@+id/tvSelection" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="18sp" android:textStyle="bold" android:textColor="@color/colorPrimary" android:accessibilityLiveRegion="polite" />
+     </LinearLayout>
+     <GridLayout android:id="@+id/modeSummaries" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:columnCount="3">
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnLottery" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="事件 开" />
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnExclusion" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="排除 关" />
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnNoRepeat" style="@style/DiceMode" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:layout_gravity="fill" android:text="不重复 关" />
+     </GridLayout>
     </LinearLayout>
-
-    <GridLayout
-        android:id="@+id/diceGrid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="4"
-        android:rowCount="4"
-        android:alignmentMode="alignMargins"
-        android:useDefaultMargins="true">
-
-        <Button android:id="@+id/btn1d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d2" />
-        <Button android:id="@+id/btn1d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d3" />
-        <Button android:id="@+id/btn1d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d4" />
-        <Button android:id="@+id/btn1d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d6" />
-        <Button android:id="@+id/btn1d10" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d10" />
-        <Button android:id="@+id/btn1d20" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d20" />
-        <Button android:id="@+id/btn1d100" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="1d100" />
-        <Button android:id="@+id/btn2d2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d2" />
-        <Button android:id="@+id/btn2d3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d3" />
-        <Button android:id="@+id/btn2d4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d4" />
-        <Button android:id="@+id/btn2d6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="2d6" />
-        <Button android:id="@+id/btnMdn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:text="@string/mdn" />
-
-    </GridLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:paddingTop="12dp">
-
-        <TextView
-            android:id="@+id/tvResultLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:lineSpacingExtra="6dp" />
-
-        <TextView
-            android:id="@+id/tvSumLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:lineSpacingExtra="4dp"
-            android:visibility="gone" />
-
+   </com.google.android.material.card.MaterialCardView>
+   <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="上次结果" android:textSize="16sp" android:textStyle="bold" android:accessibilityHeading="true" />
+      <TextView android:id="@+id/tvResultDice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" android:accessibilityLiveRegion="polite" />
+     </LinearLayout>
+     <TextView android:id="@+id/tvEmptyResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="选择骰型，投掷你的第一个结果" android:paddingTop="20dp" android:paddingBottom="20dp" android:gravity="center" />
+     <LinearLayout android:id="@+id/resultContent" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="top" android:baselineAligned="false">
+     <GridLayout android:id="@+id/resultGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="3" />
+     <View android:id="@+id/sumDivider" android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" android:background="@color/softBorder" android:visibility="gone" android:importantForAccessibility="no" />
+     <LinearLayout android:id="@+id/sumRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+      <TextView android:id="@+id/tvSumLabel" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="总和" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <TextView android:id="@+id/tvSumLine" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/colorPrimary" android:textIsSelectable="true" />
+     </LinearLayout>
+     </LinearLayout>
+     <TextView android:id="@+id/tvExcludedLine" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:visibility="gone" android:textIsSelectable="true" />
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnHistory"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/history" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
-
-        <TextView
-            android:id="@+id/tvResultSizeLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:text="@string/result_size" />
-
-        <SeekBar
-            android:id="@+id/sbResultSize"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:max="22" />
-
+   </com.google.android.material.card.MaterialCardView>
+   <com.google.android.material.card.MaterialCardView style="@style/DiceCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="不重复抽取" android:textSize="16sp" android:textStyle="bold" android:accessibilityHeading="true" />
+      <TextView android:id="@+id/tvRoundDice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" />
+     </LinearLayout>
+     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:id="@+id/tvRoundState" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/textSecondary" />
+      <Button android:id="@+id/btnRoundDetails" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:paddingLeft="8dp" android:paddingRight="8dp" android:text="查看已掷" />
+     </LinearLayout>
+     <TextView android:id="@+id/tvRound" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:accessibilityLiveRegion="polite" />
+     <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/roundProgress" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:visibility="gone" android:indeterminate="false" app:trackThickness="6dp" app:trackCornerRadius="3dp" app:indicatorColor="@color/colorPrimary" app:trackColor="@color/softIndigo" />
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="4dp">
-
-        <TextView
-            android:id="@+id/tvSumSizeLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:text="@string/sum_size" />
-
-        <SeekBar
-            android:id="@+id/sbSumSize"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:max="22" />
-
-    </LinearLayout>
-
-    </LinearLayout>
+   </com.google.android.material.card.MaterialCardView>
+  </LinearLayout>
+ </ScrollView>
+ <Button android:id="@+id/btnRoll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:layout_marginEnd="20dp" android:layout_marginTop="4dp" android:layout_marginBottom="8dp" android:minHeight="56dp" android:text="投掷" android:textSize="18sp" app:cornerRadius="12dp" />
+</LinearLayout>

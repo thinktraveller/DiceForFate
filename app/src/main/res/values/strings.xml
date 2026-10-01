@@ -11,10 +11,17 @@
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
     <string name="invalid_input">输入数字不合法</string>
-    <string name="hint_m_range">骰子数 m (2≤m≤10)</string>
+    <string name="hint_m_range">骰子数 m (1≤m≤10)</string>
     <string name="hint_n_range">骰子面数 n (2≤n≤100)</string>
     <string name="font_size_label">字号: %1$dsp</string>
     <string name="result_size">结果字号</string>
     <string name="sum_size">总和字号</string>
     <string name="lottery_mode_label">随机事件模式</string>
+    <string name="exclusion_mode_label">排除模式（每次掷骰前选择）</string>
+    <string name="exclusion_dialog_title">选择本次排除面值</string>
+    <string name="exclusion_limit">至少保留一个面值</string>
+    <string name="continue_roll">继续</string>
+    <string name="event_dialog_title">填写事件</string>
+    <string name="event_for_face">点数 %1$d 对应事件</string>
+    <string name="draw_event">开始抽签</string>
 </resources>

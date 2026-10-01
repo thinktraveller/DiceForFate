@@ -30,7 +30,8 @@ class ResultAdapter(private var items: List<RollResult>, private val onLongClick
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.tvDice.text = "${item.dice.count}d${item.dice.sides}"
-        holder.tvRolls.text = "结果: ${item.rolls.joinToString(", ")}"
+        val excluded = if (item.excludedFaces.isEmpty()) "" else "\n排除面值: ${item.excludedFaces.joinToString(", ")}"
+        holder.tvRolls.text = "结果: ${item.rolls.joinToString(", ")}$excluded"
         holder.tvSum.text = "总和: ${item.sum}"
         holder.tvEvent.text = item.event?.let { "事件: $it" } ?: ""
         val df = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
