@@ -432,7 +432,7 @@ class MainActivity : ComponentActivity() {
         backgroundTintList = androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_background)
         setTextColor(androidx.core.content.ContextCompat.getColorStateList(context, R.color.count_text))
         textSize = 14f
-        setPadding(dp(8), 0, dp(8), 0)
+        setPadding(dp(4), 0, dp(4), 0)
     }
 
     private fun setupCountOptions() {
@@ -450,8 +450,8 @@ class MainActivity : ComponentActivity() {
 
     private fun setupSideOptions() {
         val paint = choiceButton(100).paint
-        // Use the actual 8dp padding on each side; the old estimate forced a third row.
-        val cellWidth = maxOf(dp(48), kotlin.math.ceil(paint.measureText("✓ 100").toDouble()).toInt() + dp(16)) + dp(8)
+        // Leave room for four 48dp targets within a 320dp window, including the check mark.
+        val cellWidth = maxOf(dp(48), kotlin.math.ceil(paint.measureText("✓ 100").toDouble()).toInt() + dp(8)) + dp(4)
         val availableWidth = binding.sideOptions.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(72))
         val columns = MainPresentation.columns(availableWidth, cellWidth, 4)
         if (binding.sideOptions.childCount == 8 && binding.sideOptions.columnCount == columns) return
@@ -466,7 +466,7 @@ class MainActivity : ComponentActivity() {
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
                 rowSpec = android.widget.GridLayout.spec(index / columns, android.widget.GridLayout.FILL)
                 columnSpec = android.widget.GridLayout.spec(index % columns, 1f)
-                setMargins(dp(4), dp(4), dp(4), dp(4))
+                setMargins(dp(2), dp(4), dp(2), dp(4))
             })
         }
     }
